@@ -57,10 +57,10 @@ jobs:
         run: git config --global --add safe.directory "$(pwd)"
 
       - name: Patch kernel to 6.12.${{ inputs.kernel_version }}
-        if: inputs.patch_kernel == 'true'
+        if: (github.event.inputs.patch_kernel == 'true')
         run: |
           set -e
-          for i in $(seq 33 ${{ inputs.kernel_version }}); do
+          for i in $(seq 2 ${{ inputs.kernel_version }}); do
             fp=$((i-1))-$i
             wget -q "https://www.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.$fp.xz"
             unxz patch-6.12.$fp.xz
