@@ -36,7 +36,6 @@ jobs:
       - name: Add architectures and install required packages
         run: |
           sudo dpkg --add-architecture armhf
-          sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y \
           git lsb-release \
