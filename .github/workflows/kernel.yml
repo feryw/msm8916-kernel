@@ -64,7 +64,7 @@ jobs:
             wget -q "https://www.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.$fp.xz"
             unxz patch-6.12.$fp.xz
             echo "Patching kernel 6.12.$(($i-1)) to 6.12.$i"
-            patch -p1 < patch-6.12.$fp
+            patch -p1 --force --reject-file=/dev/null < patch-6.12.$fp
             rm patch-6.12.$fp
           done
 
