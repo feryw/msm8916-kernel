@@ -33,11 +33,22 @@ jobs:
         arch: [arm64, armv7]
 
     steps:
-      - name: Install packages
+      - name: Fix APT sources for armhf/arm64
+        run: |
+          sudo tee /etc/apt/sources.list > /dev/null <<EOF
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe restricted multiverse
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe restricted multiverse
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe restricted multiverse
+          EOF
+
+      - name: Add architectures and update
         run: |
           sudo dpkg --add-architecture armhf
           sudo dpkg --add-architecture arm64
           sudo apt-get update
+
+      - name: Install required packages
+        run: |
           sudo apt-get install -y \
             git lsb-release \
             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf \
@@ -55,8 +66,9 @@ jobs:
       - name: Patch kernel to 6.12.${{ inputs.kernel_version }}
         if: inputs.patch_kernel == 'true'
         run: |
-          for i in `seq 33 ${{ inputs.kernel_version }}`; do
-            fp=$(($i-1))-$i
+          set -e
+          for i in $(seq 33 ${{ inputs.kernel_version }}); do
+            fp=$((i-1))-$i
             wget -q "https://www.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.$fp.xz"
             unxz patch-6.12.$fp.xz
             patch -p1 < patch-6.12.$fp
@@ -80,19 +92,23 @@ jobs:
 
           export LOCALVERSION=
           make LOCALVERSION= mrproper
+          if [ ! -f "arch/$ARCH/configs/uz801v3_defconfig" ]; then
+            echo "Missing defconfig: arch/$ARCH/configs/uz801v3_defconfig"
+            exit 1
+          fi
           make uz801v3_defconfig
           make -j$(nproc) deb-pkg
 
       - name: Prepare artifacts
         run: |
-          mkdir artifacts
-          mv ../linux-*.deb artifacts/
+          mkdir -p artifacts
+          find .. -maxdepth 1 -name "linux-*.deb" -exec mv {} artifacts/ \;
 
       - name: Build boot image
         run: |
           cd .github/scripts
-          chmod +x ./build_boot_img.sh
-          sudo ./build_boot_img.sh ${{ matrix.arch }}
+          chmod +x ./mkbootimg_chrootfs.sh
+          sudo ./mkbootimg_chrootfs.sh ${{ matrix.arch }}
 
       - name: Generate release tag
         id: version
