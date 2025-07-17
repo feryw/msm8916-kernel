@@ -33,13 +33,11 @@ jobs:
         arch: [arm64, armv7]
 
     steps:
-      - name: Fix APT sources for armhf/arm64
+      - name: Reset APT sources to archive.ubuntu.com
         run: |
-          sudo tee /etc/apt/sources.list > /dev/null <<EOF
-          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe restricted multiverse
-          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe restricted multiverse
-          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe restricted multiverse
-          EOF
+          sudo sed -i 's|http://.*.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list
+          sudo apt-get clean
+          sudo apt-get update
 
       - name: Add architectures and update
         run: |
