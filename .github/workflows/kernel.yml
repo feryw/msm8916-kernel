@@ -26,7 +26,7 @@ on:
 jobs:
   build:
     name: Build kernel and boot image (${{ matrix.arch }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm
 
     strategy:
       matrix:
