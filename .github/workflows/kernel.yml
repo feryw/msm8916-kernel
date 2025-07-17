@@ -33,27 +33,18 @@ jobs:
         arch: [arm64, armv7]
 
     steps:
-      - name: Reset APT sources to archive.ubuntu.com
-        run: |
-          sudo sed -i 's|http://.*.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list
-          sudo apt-get clean
-          sudo apt-get update
-
-      - name: Add architectures and update
+      - name: Add architectures and install required packages
         run: |
           sudo dpkg --add-architecture armhf
           sudo dpkg --add-architecture arm64
           sudo apt-get update
-
-      - name: Install required packages
-        run: |
           sudo apt-get install -y \
-            git lsb-release \
-            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf \
-            bison flex build-essential \
-            libssl-dev:armhf libssl-dev:arm64 \
-            libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils \
-            binfmt-support qemu-user-static mkbootimg
+          git lsb-release \
+          gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf \
+          bison flex build-essential \
+          libssl-dev:armhf libssl-dev:arm64 \
+          libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils \
+          binfmt-support qemu-user-static mkbootimg  
 
       - name: Checkout source
         uses: actions/checkout@v4
