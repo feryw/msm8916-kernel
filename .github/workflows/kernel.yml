@@ -4,11 +4,6 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      branch:
-        description: "Git branch to build"
-        required: false
-        default: "zhihe"
-        type: string
       patch_kernel:
         description: "Patch kernel to new version"
         required: false
@@ -19,6 +14,14 @@ on:
         required: true
         default: '38'
         type: string
+      arch:
+        description: "Target architecture"
+        required: true
+        default: 'armv7'
+        type: choice
+        options:
+          - arm64
+          - armv7
       ssh:
         description: 'SSH connection to Actions'
         required: true
@@ -30,12 +33,8 @@ on:
 
 jobs:
   build:
-    name: Build kernel and boot image (${{ matrix.arch }})
+    name: Build kernel and boot image (${{ inputs.arch }})
     runs-on: ubuntu-22.04-arm
-
-    strategy:
-      matrix:
-        arch: [arm64, armv7]
 
     steps:
       - name: Add architectures and install required packages
@@ -64,6 +63,7 @@ jobs:
             fp=$((i-1))-$i
             wget -q "https://www.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.$fp.xz"
             unxz patch-6.12.$fp.xz
+            echo "Patching kernel 6.12.$(($i-1)) to 6.12.$i"
             patch -p1 < patch-6.12.$fp
             rm patch-6.12.$fp
           done
@@ -74,7 +74,7 @@ jobs:
 
       - name: Build kernel
         run: |
-          if [[ "${{ matrix.arch }}" == "arm64" ]]; then
+          if [[ "${{ inputs.arch }}" == "arm64" ]]; then
             export ARCH=arm64
             export CROSS_COMPILE=aarch64-linux-gnu-
           else
@@ -101,7 +101,7 @@ jobs:
         run: |
           cd .github/scripts
           chmod +x ./mkbootimg_chrootfs.sh
-          sudo ./mkbootimg_chrootfs.sh ${{ matrix.arch }}
+          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
 
       - name: Generate release tag
         id: version
@@ -110,7 +110,7 @@ jobs:
         run: |
           cd artifacts
           NAME=$(ls linux-image-* | cut -d'_' -f1 | cut -d'-' -f3)
-          TAG_NAME="v$NAME-${{ matrix.arch }}"
+          TAG_NAME="v$NAME-$${{ inputs.arch }}"
           git log -1 --format=%b > ../changes.txt
           cd ..
           git tag -d "$TAG_NAME" 2>/dev/null || true
