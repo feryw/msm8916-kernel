@@ -33,3 +33,23 @@
 &gpio_leds_default {
 	pins = "gpio6", "gpio7", "gpio8";
 };
+
+/delete-node/ &venus;
+/delete-node/ &venus_mem;
+
+/delete-node/ &camss;
+
+/delete-node/ &mdss;
+/delete-node/ &mdss_dsi0;
+/delete-node/ &mdss_dsi0_phy;
+/delete-node/ &mdss_mdp;
+
+/delete-node/ &gpu;
+/delete-node/ &gpu_iommu;
+
+/delete-node/ &sound;
+/delete-node/ &lpass;
+/delete-node/ &lpass_codec;
+/delete-node/ &pm8916_codec;
+
+/delete-node/ &wcnss_bt;
