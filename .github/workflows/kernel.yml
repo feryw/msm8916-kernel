@@ -4,6 +4,11 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
+      branch:
+        description: "Git branch to build"
+        required: false
+        default: "zhihe"
+        type: string
       patch_kernel:
         description: "Patch kernel to new version"
         required: false
