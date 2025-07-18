@@ -41,7 +41,7 @@ cat <<EOF | sudo tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
-
+mkdir -p /etc
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 cat <<EOI > /etc/fstab
