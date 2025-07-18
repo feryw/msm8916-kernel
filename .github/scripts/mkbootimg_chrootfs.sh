@@ -76,13 +76,11 @@ sudo umount "$ROOTFS_DIR/dev/pts"
 sudo umount "$ROOTFS_DIR/dev"
 sudo umount "$ROOTFS_DIR/sys"
 
-ls "$ROOTFS_DIR/boot"
-ls "$ROOTFS_DIR/$DTB_DIR"
-
 # Extract boot artifacts
 KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
 INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
 DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
+echo "$KERNEL_IMG $INITRD_IMG $DTB_PATH"
 
 cp "$KERNEL_IMG" Image.gz
 cp "$INITRD_IMG" initrd.img
