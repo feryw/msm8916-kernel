@@ -41,7 +41,7 @@ cat <<EOF | sudo tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
 set -e
 
 export DEBIAN_FRONTEND=noninteractive
-mkdir -p /etc
+
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 cat <<EOI > /etc/fstab
@@ -63,6 +63,9 @@ sudo mount --bind /proc "$ROOTFS_DIR/proc"
 sudo mount --bind /dev "$ROOTFS_DIR/dev"
 sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
 sudo mount --bind /sys "$ROOTFS_DIR/sys"
+
+sudo mkdir -p "$ROOTFS_DIR/etc"
+sudo cp /etc/resolv.conf "$ROOTFS_DIR/etc/resolv.conf"
 
 sudo chroot "$ROOTFS_DIR" /bin/bash /tmp/chroot.sh
 
