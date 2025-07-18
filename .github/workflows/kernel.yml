@@ -16,7 +16,7 @@ on:
       arch:
         description: "Target architecture"
         required: true
-        default: 'arm64'
+        default: 'armv7'
         type: choice
         options:
           - arm64
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: debian:bookworm
-      options: --hostname chewy
+      options: --hostname wyref
     steps:
       - name: Prepare
         run: |
@@ -76,6 +76,7 @@ jobs:
           else
             export CROSS_COMPILE=arm-linux-gnueabihf-
             export ARCH=arm
+            export KBUILD_DEBARCH=armhf
           fi
           export LOCALVERSION=
           make LOCALVERSION= mrproper
