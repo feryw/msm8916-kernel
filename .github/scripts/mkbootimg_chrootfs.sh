@@ -50,7 +50,7 @@ tmpfs /tmp tmpfs defaults,nosuid 0 0
 EOI
 
 apt-get update
-apt-get install -y initramfs-tools
+apt-get install -y initramfs-tools wireless-regdb apt-utils
 dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
 EOF
 
@@ -79,7 +79,7 @@ sudo umount "$ROOTFS_DIR/sys"
 # Extract boot artifacts
 KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
 INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
-DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3*.dtb" | head -n1)
+DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
 
 cp "$KERNEL_IMG" Image.gz
 cp "$INITRD_IMG" initrd.img
