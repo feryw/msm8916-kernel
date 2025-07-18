@@ -1,4 +1,4 @@
-name: Release kernel deb packages ${{ inputs.arch }}
+name: Release kernel deb packages
 on:
   repository_dispatch:
   workflow_dispatch:
