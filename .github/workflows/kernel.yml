@@ -30,21 +30,18 @@ on:
           - true
           - false
 
-env:
-  TZ: Asia/Jakarta
-
 jobs:
   build:
     name: Build kernel
-    runs-on: ubuntu-latest
-    container: 
-      image: debian:bookworm
-      options: --hostname wyref
+    runs-on: ubuntu-22.04-arm
     steps:
       - name: Prepare
         run: |
-          apt-get -y update
-          apt-get -y install libssl-dev git lsb-release gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils
+          sudo dpkg --add-architecture armhf
+          sudo apt-get -y update
+          sudo apt-get -y install git lsb-release gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev:armhf libssl-dev:arm64 libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils
+          sudo timedatectl set-timezone Asia/Jakarta
+          sudo hostnamectl set-hostname wyref
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,10 +49,10 @@ jobs:
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
 
-      - name: Patch kernel to 6.12.${{ inputs.kernel_version }}
+      - name: Patching kernel to 6.12.${{ inputs.kernel_version }}
         if: (github.event.inputs.patch_kernel == 'true')
         run: |
-          for i in `seq 2 ${{ inputs.kernel_version }}`; do
+          for i in `seq 3 ${{ inputs.kernel_version }}`; do
             fp=$(($i-1))-$i
             wget -q "https://www.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.$fp.xz"
             unxz patch-6.12.$fp.xz
@@ -70,7 +67,7 @@ jobs:
 
       - name: Build
         run: |
-          if [ $(echo "${{ inputs.arch }}" | grep "arm64") ]; then
+          if [[ "${{ inputs.arch }}" == "arm64" ]]; then
             export CROSS_COMPILE=aarch64-linux-gnu-
             export ARCH=arm64
           else
@@ -84,7 +81,7 @@ jobs:
           make deb-pkg -j"$(($(grep -c processor < /proc/cpuinfo)*2))"
 
       - name: Prepare artifacts
-        run: mkdir artifacts && mv ../linux-* artifacts/
+        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -93,6 +90,8 @@ jobs:
           path: artifacts/*
 
   bootimg:
+    permissions:
+      contents: write
     name: Make boot images
     needs: build
     runs-on: ubuntu-22.04
@@ -115,16 +114,22 @@ jobs:
       - name: Build
         run: |
           cd .github/scripts
-          sudo ./mkbootimg_chrootfs.sh "${{ inputs.arch }}"
+          chmod +x ./mkbootimg_chrootfs.sh
+          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
 
       - name: Generate release tag
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
           TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
           git log -1 --format=%b > changes.txt
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
+          gh release delete "$TAG_NAME" --yes || true
+          git tag -d "$TAG_NAME" 2>/dev/null || true
+          git push --delete origin "$TAG_NAME" 2>/dev/null || true
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
           echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
 
