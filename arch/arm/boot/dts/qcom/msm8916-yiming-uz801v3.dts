@@ -39,10 +39,10 @@
 
 /delete-node/ &camss;
 
-/delete-node/ &mdss;
 /delete-node/ &mdss_dsi0;
 /delete-node/ &mdss_dsi0_phy;
 /delete-node/ &mdss_mdp;
+/delete-node/ &mdss;
 
 /delete-node/ &gpu;
 /delete-node/ &gpu_iommu;
