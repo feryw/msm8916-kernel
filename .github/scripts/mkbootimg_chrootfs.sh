@@ -65,6 +65,7 @@ sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
 sudo mount --bind /sys "$ROOTFS_DIR/sys"
 
 sudo mkdir -p "$ROOTFS_DIR/etc"
+sudo rm -f "$ROOTFS_DIR/etc/resolv.conf"
 sudo cp /etc/resolv.conf "$ROOTFS_DIR/etc/resolv.conf"
 
 sudo chroot "$ROOTFS_DIR" /bin/bash /tmp/chroot.sh
