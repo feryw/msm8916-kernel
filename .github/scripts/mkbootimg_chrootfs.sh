@@ -8,7 +8,7 @@ if [ "$ARCH" == "arm64" ]; then
   DTB_DIR="usr/lib/linux-image*/qcom"
 else
   DISTRO_ARCH="armhf"
-  DTB_DIR="usr/lib/linux-image*"
+  DTB_DIR="usr/lib"
 fi
 
 PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
