@@ -1,5 +1,4 @@
-name: Release kernel deb packages
-
+name: Release kernel deb packages ${{ inputs.arch }}
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -12,12 +11,12 @@ on:
       kernel_version:
         description: "Select kernel version"
         required: true
-        default: '38'
+        default: '39'
         type: string
       arch:
         description: "Target architecture"
         required: true
-        default: 'armv7'
+        default: 'arm64'
         type: choice
         options:
           - arm64
@@ -31,96 +30,104 @@ on:
           - true
           - false
 
+env:
+  TZ: Asia/Jakarta
+
 jobs:
   build:
-    name: Build kernel and boot image (${{ inputs.arch }})
-    runs-on: ubuntu-22.04-arm
-
+    name: Build kernel
+    runs-on: ubuntu-latest
+    container: 
+      image: debian:bookworm
+      options: --hostname chewy
     steps:
-      - name: Add architectures and install required packages
+      - name: Prepare
         run: |
-          sudo dpkg --add-architecture armhf
-          sudo apt-get update
-          sudo apt-get install -y \
-          git lsb-release \
-          gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf \
-          bison flex build-essential \
-          libssl-dev:armhf libssl-dev:arm64 \
-          libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils \
-          binfmt-support qemu-user-static mkbootimg  
+          apt-get -y update
+          apt-get -y install git lsb-release gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils
 
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Git safety
+      - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
 
       - name: Patch kernel to 6.12.${{ inputs.kernel_version }}
         if: (github.event.inputs.patch_kernel == 'true')
         run: |
-          set -e
-          for i in $(seq 2 ${{ inputs.kernel_version }}); do
-            fp=$((i-1))-$i
+          for i in `seq 2 ${{ inputs.kernel_version }}`; do
+            fp=$(($i-1))-$i
             wget -q "https://www.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.$fp.xz"
             unxz patch-6.12.$fp.xz
             echo "Patching kernel 6.12.$(($i-1)) to 6.12.$i"
-            patch -p1 --force --reject-file=/dev/null < patch-6.12.$fp
+            patch -p1 < patch-6.12.$fp
             rm patch-6.12.$fp
           done
 
       - name: SSH connection to Actions
-        if: inputs.ssh == 'true'
         uses: csexton/debugger-action@master
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
 
-      - name: Build kernel
+      - name: Build
         run: |
-          if [[ "${{ inputs.arch }}" == "arm64" ]]; then
-            export ARCH=arm64
+          if [ $(echo "${{ inputs.arch }}" | grep "arm64") ]; then
             export CROSS_COMPILE=aarch64-linux-gnu-
+            export ARCH=arm64
           else
-            export ARCH=arm
             export CROSS_COMPILE=arm-linux-gnueabihf-
-            export KBUILD_DEBARCH=armhf
+            export ARCH=arm
           fi
-
           export LOCALVERSION=
           make LOCALVERSION= mrproper
-          if [ ! -f "arch/$ARCH/configs/uz801v3_defconfig" ]; then
-            echo "Missing defconfig: arch/$ARCH/configs/uz801v3_defconfig"
-            exit 1
-          fi
           make uz801v3_defconfig
-          make -j$(nproc) deb-pkg
+          make deb-pkg -j"$(($(grep -c processor < /proc/cpuinfo)*2))"
 
       - name: Prepare artifacts
-        run: |
-          mkdir -p artifacts
-          find .. -maxdepth 1 -name "linux-*.deb" -exec mv {} artifacts/ \;
+        run: mkdir artifacts && mv ../linux-* artifacts/
 
-      - name: Build boot image
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: artifacts/*
+
+  bootimg:
+    name: Make boot images
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Prepare
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install binfmt-support qemu-user-static mkbootimg
+          mkdir artifacts
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download kernel
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel
+          path: artifacts
+
+      - name: Build
         run: |
           cd .github/scripts
-          chmod +x ./mkbootimg_chrootfs.sh
-          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
+          sudo ./mkbootimg_chrootfs.sh "${{ inputs.arch }}"
 
       - name: Generate release tag
         id: version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd artifacts
-          NAME=$(ls linux-image-* | cut -d'_' -f1 | cut -d'-' -f3)
-          TAG_NAME="v$NAME-$${{ inputs.arch }}"
-          git log -1 --format=%b > ../changes.txt
-          cd ..
-          git tag -d "$TAG_NAME" 2>/dev/null || true
-          git push --delete origin "$TAG_NAME" 2>/dev/null || true
-          git tag "$TAG_NAME"
-          git push origin "$TAG_NAME"
+          NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
+          TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
+          git log -1 --format=%b > changes.txt
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
           echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
 
-      - name: Upload GitHub Release
+      - name: Releases
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ steps.version.outputs.NAME }}
