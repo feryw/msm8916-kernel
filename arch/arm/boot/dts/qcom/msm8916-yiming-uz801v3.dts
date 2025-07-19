@@ -34,6 +34,9 @@
 	pins = "gpio6", "gpio7", "gpio8";
 };
 
+&memshare {
+	/delete-property/ qcom,legacy-client;
+};
 /delete-node/ &memshare_gps;
 /delete-node/ &gps_mem;
 /delete-node/ &mdss;
