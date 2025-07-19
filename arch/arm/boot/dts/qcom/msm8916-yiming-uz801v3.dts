@@ -34,22 +34,23 @@
 	pins = "gpio6", "gpio7", "gpio8";
 };
 
-/delete-node/ /reserved-memory/gps_mem;
-/delete-node/ /soc/mdss;
-/delete-node/ /soc/gpu;
-/delete-node/ /soc/gpu_iommu;
-/delete-node/ /soc/sound;
-/delete-node/ /soc/lpass;
-/delete-node/ /soc/lpass_codec;
-/delete-node/ /soc/wcnss/smd-edge/wcnss_ctrl/wcnss_bt;
+/delete-node/ &gps_mem;
+/delete-node/ &mdss;
+/delete-node/ &gpu;
+/delete-node/ &gpu_iommu;
+/delete-node/ &sound;
+/delete-node/ &lpass;
+/delete-node/ &lpass_codec;
+/delete-node/ &wcnss_bt;
 /delete-node/ &pm8916_codec;
 /delete-node/ &venus;
 /delete-node/ &venus_mem;
 /delete-node/ &camss;
-/delete-node/ /cpu_opp_table/opp-1094400000;
-/delete-node/ /cpu_opp_table/opp-1152000000;
-/delete-node/ /cpu_opp_table/opp-1209600000;
-/delete-node/ /cpu_opp_table/opp-1248000000;
-/delete-node/ /cpu_opp_table/opp-1363200000;
-/delete-node/ /cpu_opp_table/opp-1401600000;
-
+&cpu_opp_table {
+	/delete-node/ opp-1094400000;
+	/delete-node/ opp-1152000000;
+	/delete-node/ opp-1209600000;
+	/delete-node/ opp-1248000000;
+	/delete-node/ opp-1363200000;
+	/delete-node/ opp-1401600000;
+};
