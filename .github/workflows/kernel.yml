@@ -79,6 +79,7 @@ jobs:
           make LOCALVERSION= mrproper
           make uz801v3_defconfig
           make deb-pkg -j"$(($(grep -c processor < /proc/cpuinfo)*2))"
+          rm ../*orig.tar.gz
 
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
