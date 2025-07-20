@@ -7,9 +7,6 @@
 / {
 	model = "uz801 v3.0/v3.2 4G Modem Stick";
 	compatible = "yiming,uz801-v3", "qcom,msm8916";
-
-	/delete-node/ /thermal-zones/gpu-thermal;
-	/delete-node/ /thermal-zones/camera-thermal;
 };
 
 &button_restart {
@@ -61,3 +58,5 @@
 	/delete-node/ opp-1363200000;
 	/delete-node/ opp-1401600000;
 };
+/delete-node/ &{/thermal-zones/gpu-thermal};
+/delete-node/ &{/thermal-zones/camera-thermal};
