@@ -58,3 +58,5 @@
 	/delete-node/ opp-1363200000;
 	/delete-node/ opp-1401600000;
 };
+/delete-node/ /thermal-zones/gpu-thermal;
+/delete-node/ /thermal-zones/camera-thermal;
