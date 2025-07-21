@@ -65,13 +65,26 @@ jobs:
         uses: csexton/debugger-action@master
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
 
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ runner.os }}-kernel-build-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-kernel-build-
+
       - name: Build
         run: |
+          ccache --max-size=5G
+          echo "USE_CCACHE=1" >> $GITHUB_ENV
+          echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
+          echo "PATH=/usr/lib/ccache:$PATH" >> $GITHUB_ENV
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
             export CROSS_COMPILE=aarch64-linux-gnu-
+            export CC='ccache aarch64-linux-gnu-gcc'
             export ARCH=arm64
           else
             export CROSS_COMPILE=arm-linux-gnueabihf-
+            export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
             export KBUILD_DEBARCH=armhf
           fi
