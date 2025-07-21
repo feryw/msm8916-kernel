@@ -80,11 +80,11 @@ jobs:
           echo "PATH=/usr/lib/ccache:$PATH" >> $GITHUB_ENV
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
             export CROSS_COMPILE=aarch64-linux-gnu-
-            export CC='ccache aarch64-linux-gnu-gcc'
+            echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_ENV
             export ARCH=arm64
           else
             export CROSS_COMPILE=arm-linux-gnueabihf-
-            export CC='ccache arm-linux-gnueabihf-gcc'
+            echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_ENV
             export ARCH=arm
             export KBUILD_DEBARCH=armhf
           fi
