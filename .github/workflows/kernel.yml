@@ -28,8 +28,11 @@ jobs:
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
-      - name: Checkout
+      - name: Check out code at specified commit
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.commit }}
 
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
@@ -59,7 +62,7 @@ jobs:
           export LOCALVERSION=
           make LOCALVERSION= mrproper
           make uz801v3_defconfig
-          make deb-pkg -j"$(($(grep -c processor < /proc/cpuinfo)*2))"
+          make deb-pkg -j"$(nproc)"
           rm ../*orig.tar.gz
 
       - name: Prepare artifacts
