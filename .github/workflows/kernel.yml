@@ -27,27 +27,17 @@ jobs:
           sudo apt-get -y install git lsb-release ccache gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev:armhf libssl-dev:arm64 libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
-
-      - name: Checkout HEAD
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Snapshot current defconfig & DTS
-        run: |
-          mkdir -p current
-          cp arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts /current
-          
+       
       - name: Check out code at specified commit
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           ref: ${{ github.event.inputs.commit }}
 
       - name: Restore defconfig & DTS
         run: |
-          cp current/uz801v3_defconfig arch/arm/configs
-          cp current/msm8916-yiming-uz801v3.dts arch/arm/boot/dts/qcom
+          git fetch origin HEAD
+          git show origin/HEAD:arch/arm/configs/uz801v3_defconfig > arch/arm/configs/uz801v3_defconfig
+          git show origin/HEAD:arch/arm/boot/dts/msm8916-yiming-uz801v3.dts > arch/arm/boot/dts/msm8916-yiming-uz801v3.dts
 
       - name: Commit HEAD defconfig & DTS locally
         run: |
