@@ -53,7 +53,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git switch -C uptohigh
-          git add arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/msm8916-yiming-uz801v3.dts
+          git add arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts
           git commit -m "sync HEAD defconfig & DTS"          
 
       - name: Prepare repository
