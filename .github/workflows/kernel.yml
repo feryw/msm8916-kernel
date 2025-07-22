@@ -28,11 +28,34 @@ jobs:
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
+      - name: Checkout HEAD
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Snapshot current defconfig & DTS
+        run: |
+          mkdir -p current
+          cp arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts /current
+          
       - name: Check out code at specified commit
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.inputs.commit }}
+
+      - name: Restore defconfig & DTS
+        run: |
+          cp current/uz801v3_defconfig arch/arm/configs
+          cp current/msm8916-yiming-uz801v3.dts arch/arm/boot/dts/qcom
+
+      - name: Commit HEAD defconfig & DTS locally
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b upto
+          git add arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/msm8916-yiming-uz801v3.dts
+          git commit -m "sync HEAD defconfig & DTS"          
 
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
