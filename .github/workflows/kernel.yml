@@ -74,16 +74,16 @@ jobs:
 
       - name: Build
         run: |
-          echo "USE_CCACHE=1" >> $GITHUB_ENV
-          echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
-          echo "PATH=/usr/lib/ccache:$PATH" >> $GITHUB_ENV
+          export USE_CCACHE=1
+          export CCACHE_DIR=${{ github.workspace }}/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
             export CROSS_COMPILE=aarch64-linux-gnu-
-            echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_ENV
+            export CC='ccache aarch64-linux-gnu-gcc'
             export ARCH=arm64
           else
             export CROSS_COMPILE=arm-linux-gnueabihf-
-            echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_ENV
+            export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
             export KBUILD_DEBARCH=armhf
           fi
