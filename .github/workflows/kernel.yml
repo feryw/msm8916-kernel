@@ -54,7 +54,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git switch -C uptohigh
           git add arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts
-          git commit -m "sync HEAD defconfig & DTS"          
+          if ! git diff --cached --quiet; then
+            git commit -m "sync HEAD defconfig & DTS"
+          else
+            echo "No changes to commit"
+          fi
 
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
