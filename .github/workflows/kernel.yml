@@ -36,7 +36,9 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/backup"
           cp arch/arm/configs/uz801v3_defconfig "${RUNNER_TEMP}/backup"
           cp arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts "${RUNNER_TEMP}/backup"
-
+          cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
+          
       - name: Clean all files
         run: |
           rm -rf * .[^.] .??*
@@ -48,12 +50,14 @@ jobs:
 
       - name: Restore defconfig & DTS
         run: |
-          cp $RUNNER_TEMP/backup/uz801v3_defconfig arch/arm/configs/
-          cp $RUNNER_TEMP/backup/msm8916-yiming-uz801v3.dts arch/arm/boot/dts/qcom
+          cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
+          cp $RUNNER_TEMP/backup/*.dts arch/arm/boot/dts/qcom
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git switch -C uptohigh
-          git add arch/arm/configs/uz801v3_defconfig arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts
+          git status
+          git add .
+          git status
           if ! git diff --cached --quiet; then
             git commit -m "sync HEAD defconfig & DTS"
           else
