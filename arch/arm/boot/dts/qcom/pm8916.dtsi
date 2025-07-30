@@ -4,8 +4,37 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/spmi/spmi.h>
 
-&spmi_bus {
+/ {
+	thermal-zones {
+		pm8916-thermal {
+			polling-delay-passive = <100>;
 
+			thermal-sensors = <&pm8916_temp>;
+
+			trips {
+				trip0 {
+					temperature = <105000>;
+					hysteresis = <0>;
+					type = "passive";
+				};
+
+				trip1 {
+					temperature = <125000>;
+					hysteresis = <0>;
+					type = "hot";
+				};
+
+				trip2 {
+					temperature = <145000>;
+					hysteresis = <0>;
+					type = "critical";
+				};
+			};
+		};
+	};
+};
+
+&spmi_bus {
 	pm8916_0: pmic@0 {
 		compatible = "qcom,pm8916", "qcom,spmi-pmic";
 		reg = <0x0 SPMI_USID>;
@@ -190,9 +219,6 @@
 		pm8916_codec: audio-codec@f000 {
 			compatible = "qcom,pm8916-wcd-analog-codec";
 			reg = <0xf000>;
-			reg-names = "pmic-codec-core";
-			clocks = <&gcc GCC_CODEC_DIGCODEC_CLK>;
-			clock-names = "mclk";
 			interrupt-parent = <&spmi_bus>;
 			interrupts = <0x1 0xf0 0x0 IRQ_TYPE_NONE>,
 				     <0x1 0xf0 0x1 IRQ_TYPE_NONE>,

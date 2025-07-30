@@ -134,7 +134,7 @@
 		sleep_clk: sleep-clk {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
-			clock-frequency = <32768>;
+			clock-frequency = <32764>;
 		};
 	};
 
@@ -258,24 +258,6 @@
 		opp-998400000 {
 			opp-hz = /bits/ 64 <998400000>;
 		};
-		opp-1094400000 {
-			opp-hz = /bits/ 64 <1094400000>;
-		};
-		opp-1152000000 {
-			opp-hz = /bits/ 64 <1152000000>;
-		};
-		opp-1209600000 {
-			opp-hz = /bits/ 64 <1209600000>;
-		};
-		opp-1248000000 {
-			opp-hz = /bits/ 64 <1248000000>;
-		};
-		opp-1363200000 {
-			opp-hz = /bits/ 64 <1363200000>;
-		};
-		opp-1401600000 {
-			opp-hz = /bits/ 64 <1401600000>;
-		};
 	};
 
 	firmware {
@@ -358,11 +340,11 @@
 
 		smd-edge {
 			interrupts = <GIC_SPI 168 IRQ_TYPE_EDGE_RISING>;
-			qcom,ipc = <&apcs 8 0>;
+			mboxes = <&apcs 0>;
 			qcom,smd-edge = <15>;
 
 			rpm_requests: rpm-requests {
-				compatible = "qcom,rpm-msm8916";
+				compatible = "qcom,rpm-msm8916", "qcom,smd-rpm";
 				qcom,smd-channels = "rpm_requests";
 
 				rpmcc: clock-controller {
@@ -410,7 +392,7 @@
 
 		interrupts = <GIC_SPI 27 IRQ_TYPE_EDGE_RISING>;
 
-		qcom,ipc = <&apcs 8 14>;
+		mboxes = <&apcs 14>;
 
 		qcom,local-pid = <0>;
 		qcom,remote-pid = <1>;
@@ -435,7 +417,7 @@
 
 		interrupts = <GIC_SPI 143 IRQ_TYPE_EDGE_RISING>;
 
-		qcom,ipc = <&apcs 8 18>;
+		mboxes = <&apcs 18>;
 
 		qcom,local-pid = <0>;
 		qcom,remote-pid = <4>;
@@ -460,8 +442,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		qcom,ipc-1 = <&apcs 8 13>;
-		qcom,ipc-3 = <&apcs 8 19>;
+		mboxes = <0>, <&apcs 13>, <0>, <&apcs 19>;
 
 		apps_smsm: apps@0 {
 			reg = <0>;
@@ -590,9 +571,6 @@
 			compatible = "qcom,msm8916-bimc";
 			reg = <0x00400000 0x62000>;
 			#interconnect-cells = <1>;
-			clock-names = "bus", "bus_a";
-			clocks = <&rpmcc RPM_SMD_BIMC_CLK>,
-				 <&rpmcc RPM_SMD_BIMC_A_CLK>;
 		};
 
 		tsens: thermal-sensor@4a9000 {
@@ -625,18 +603,12 @@
 			compatible = "qcom,msm8916-pcnoc";
 			reg = <0x00500000 0x11000>;
 			#interconnect-cells = <1>;
-			clock-names = "bus", "bus_a";
-			clocks = <&rpmcc RPM_SMD_PCNOC_CLK>,
-				 <&rpmcc RPM_SMD_PCNOC_A_CLK>;
 		};
 
 		snoc: interconnect@580000 {
 			compatible = "qcom,msm8916-snoc";
 			reg = <0x00580000 0x14000>;
 			#interconnect-cells = <1>;
-			clock-names = "bus", "bus_a";
-			clocks = <&rpmcc RPM_SMD_SNOC_CLK>,
-				 <&rpmcc RPM_SMD_SNOC_A_CLK>;
 		};
 
 		stm: stm@802000 {
@@ -1844,6 +1816,8 @@
 			power-domains = <&gcc OXILI_GDSC>;
 			operating-points-v2 = <&gpu_opp_table>;
 			iommus = <&gpu_iommu 1>, <&gpu_iommu 2>;
+			#cooling-cells = <2>;
+
 			status = "disabled";
 
 			gpu_opp_table: opp-table {
@@ -2035,7 +2009,7 @@
 				interrupts = <GIC_SPI 25 IRQ_TYPE_EDGE_RISING>;
 
 				qcom,smd-edge = <0>;
-				qcom,ipc = <&apcs 8 12>;
+				mboxes = <&apcs 12>;
 				qcom,remote-pid = <1>;
 
 				label = "hexagon";
@@ -2536,7 +2510,7 @@
 			smd-edge {
 				interrupts = <GIC_SPI 142 IRQ_TYPE_EDGE_RISING>;
 
-				qcom,ipc = <&apcs 8 17>;
+				mboxes = <&apcs 17>;
 				qcom,smd-edge = <6>;
 				qcom,remote-pid = <4>;
 
@@ -2703,7 +2677,6 @@
 	thermal-zones {
 		cpu0-1-thermal {
 			polling-delay-passive = <250>;
-			polling-delay = <1000>;
 
 			thermal-sensors = <&tsens 5>;
 
@@ -2733,7 +2706,6 @@
 
 		cpu2-3-thermal {
 			polling-delay-passive = <250>;
-			polling-delay = <1000>;
 
 			thermal-sensors = <&tsens 4>;
 
@@ -2763,9 +2735,15 @@
 
 		gpu-thermal {
 			polling-delay-passive = <250>;
-			polling-delay = <1000>;
 
 			thermal-sensors = <&tsens 2>;
+
+			cooling-maps {
+				map0 {
+					trip = <&gpu_alert0>;
+					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				};
+			};
 
 			trips {
 				gpu_alert0: trip-point0 {
@@ -2783,7 +2761,6 @@
 
 		camera-thermal {
 			polling-delay-passive = <250>;
-			polling-delay = <1000>;
 
 			thermal-sensors = <&tsens 1>;
 
@@ -2798,7 +2775,6 @@
 
 		modem-thermal {
 			polling-delay-passive = <250>;
-			polling-delay = <1000>;
 
 			thermal-sensors = <&tsens 0>;
 

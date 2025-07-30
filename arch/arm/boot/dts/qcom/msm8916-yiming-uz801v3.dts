@@ -5,7 +5,7 @@
 #include "msm8916-ufi.dtsi"
 
 / {
-	model = "uz801 v3.0/v3.2 4G Modem Stick";
+	model = "uz801 v3.0 4G Modem Stick";
 	compatible = "yiming,uz801-v3", "qcom,msm8916";
 };
 
@@ -52,12 +52,6 @@
 /delete-node/ &camss;
 &cpu_opp_table {
 	/delete-node/ opp-998400000;
-	/delete-node/ opp-1094400000;
-	/delete-node/ opp-1152000000;
-	/delete-node/ opp-1209600000;
-	/delete-node/ opp-1248000000;
-	/delete-node/ opp-1363200000;
-	/delete-node/ opp-1401600000;
 };
 /delete-node/ &{/thermal-zones/gpu-thermal};
 /delete-node/ &{/thermal-zones/camera-thermal};
