@@ -51,7 +51,7 @@ jobs:
       - name: Restore defconfig & DTS
         run: |
           cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
-          cp $RUNNER_TEMP/backup/*.dts arch/arm/boot/dts/qcom
+          cp $RUNNER_TEMP/backup/*.dts* arch/arm/boot/dts/qcom
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git switch -C uptohigh
