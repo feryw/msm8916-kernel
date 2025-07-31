@@ -14,15 +14,13 @@ on:
         options:
           - arm64
           - armv7
-          
-permissions:
-  contents: write
-  workflows: write
-      
+               
 jobs:
   build:
     name: Build kernel
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Prepare
         run: |
