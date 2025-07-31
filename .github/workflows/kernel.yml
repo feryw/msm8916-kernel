@@ -24,6 +24,7 @@ jobs:
     steps:
       - name: Prepare
         run: |
+          sudo dpkg --add-architecture armhf
           sudo apt-get -y update
           sudo apt-get -y install git lsb-release ccache gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev:armhf libssl-dev:arm64 libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils lzop liblz4-tool binfmt-support qemu-user-static mkbootimg libmpc-dev
           sudo timedatectl set-timezone Asia/Jakarta
@@ -87,6 +88,7 @@ jobs:
             export CROSS_COMPILE=arm-linux-gnueabihf-
             export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
+            export KBUILD_DEBARCH=armhf
           fi
           make mrproper uz801v3_defconfig
           make -j"$(nproc)" bindeb-pkg
