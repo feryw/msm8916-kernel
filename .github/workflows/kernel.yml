@@ -92,9 +92,8 @@ jobs:
           fi
           export LOCALVERSION=
           make LOCALVERSION= mrproper
-          make uz801v3_defconfig
-          make dtbs
-          make bindeb-pkg -j"$(nproc)"
+          make uz801v3_defconfi
+          make deb-pkg -j"$(nproc)"
           shopt -s nullglob
           files=(../*orig.tar.gz)
           if [ ${#files[@]} -gt 0 ]; then
