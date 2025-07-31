@@ -93,6 +93,7 @@ jobs:
           export LOCALVERSION=
           make LOCALVERSION= mrproper
           make uz801v3_defconfig
+          make dtbs
           make bindeb-pkg -j"$(nproc)"
           shopt -s nullglob
           files=(../*orig.tar.gz)
