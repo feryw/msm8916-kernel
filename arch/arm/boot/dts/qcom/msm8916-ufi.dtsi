@@ -45,23 +45,20 @@
 		 */
 		led_r: led-r {
 			color = <LED_COLOR_ID_RED>;
-			linux,default-trigger = "heartbeat";
-			default-state = "off";
+			default-state = "on";
 			function = LED_FUNCTION_POWER;
 		};
 
 		led_g: led-g {
 			color = <LED_COLOR_ID_GREEN>;
-			linux,default-trigger = "phy0link";
 			default-state = "off";
-			function = LED_FUNCTION_WAN;
+			function = LED_FUNCTION_WLAN;
 		};
 
 		led_b: led-b {
 			color = <LED_COLOR_ID_BLUE>;
-			linux,default-trigger = "phy0tx";
 			default-state = "off";
-			function = LED_FUNCTION_WLAN;
+			function = LED_FUNCTION_WAN;
 		};
 	};
 };

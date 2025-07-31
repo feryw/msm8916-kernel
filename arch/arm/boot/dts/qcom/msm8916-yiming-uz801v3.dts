@@ -50,8 +50,10 @@
 /delete-node/ &venus;
 /delete-node/ &venus_mem;
 /delete-node/ &camss;
+/*
 &cpu_opp_table {
 	/delete-node/ opp-998400000;
 };
+*/
 /delete-node/ &{/thermal-zones/gpu-thermal};
 /delete-node/ &{/thermal-zones/camera-thermal};
