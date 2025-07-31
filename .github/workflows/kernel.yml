@@ -109,17 +109,7 @@ jobs:
           name: kernel
           path: artifacts/*
           
-      - name: Prepare bootimg
-        run: |
-          mkdir artifacts
-
-      - name: Download kernel
-        uses: actions/download-artifact@v4
-        with:
-          name: kernel
-          path: artifacts
-
-      - name: Build
+      - name: Make boot image
         run: |
           cd .github/scripts
           chmod +x ./mkbootimg_chrootfs.sh
