@@ -87,7 +87,7 @@ jobs:
             export CROSS_COMPILE=arm-linux-gnueabihf-
             export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
-            export KBUILD_DEBARCH=armhf
+            # export KBUILD_DEBARCH=armhf
           fi
           make mrproper uz801v3_defconfig
           make -j"$(nproc)" bindeb-pkg
