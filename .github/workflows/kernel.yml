@@ -89,7 +89,7 @@ jobs:
             export KBUILD_DEBARCH=armhf
           fi
           make mrproper uz801v3_defconfig
-          make -j"$(nproc)" deb-pkg
+          make -j"$(nproc)" bindeb-pkg
           shopt -s nullglob
           files=(../*orig.tar.gz)
           if [ ${#files[@]} -gt 0 ]; then
