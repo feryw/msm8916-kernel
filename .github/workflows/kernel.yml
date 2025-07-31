@@ -86,12 +86,10 @@ jobs:
             export CC='ccache aarch64-linux-gnu-gcc'
             export ARCH=arm64
           else
-            export CROSS_COMPILE=arm-linux-gnueabihf-
-            export CC='ccache arm-linux-gnueabihf-gcc'
-            export ARCH=arm
+            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mrproper
+            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- uz801v3_defconfig
+            fakeroot make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' KBUILD_DEBARCH=armhf bindeb-pkg -d
           fi
-          make mrproper uz801v3_defconfig
-          fakeroot make -j"$(nproc)" KBUILD_DEBARCH=armhf bindeb-pkg -d
  
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
