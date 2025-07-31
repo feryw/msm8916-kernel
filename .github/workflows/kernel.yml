@@ -1,4 +1,4 @@
-name: Release kernel deb packages
+name: Release kernel
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -17,14 +17,13 @@ on:
                
 jobs:
   build:
-    name: Build kernel
+    name: Build kernel and boot image
     runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
       - name: Prepare
         run: |
-          # sudo dpkg --add-architecture armhf
           sudo apt-get -y update
           sudo apt-get -y install git lsb-release ccache gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils lzop liblz4-tool binfmt-support qemu-user-static mkbootimg libmpc-dev
           sudo timedatectl set-timezone Asia/Jakarta
@@ -75,7 +74,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-kernel-build-
 
-      - name: Build
+      - name: Build kernel
         run: |
           export USE_CCACHE=1
           export CCACHE_DIR=${{ github.workspace }}/.ccache
@@ -92,16 +91,7 @@ jobs:
           fi
           make mrproper uz801v3_defconfig
           make -j"$(nproc)" bindeb-pkg
-          shopt -s nullglob
-          files=(../*orig.tar.gz)
-          if [ ${#files[@]} -gt 0 ]; then
-            echo "Deleting ${#files[@]} file(s): ${files[*]}"
-            rm "${files[@]}"
-          else
-            echo "No orig.tar.gz files found."
-          fi
-          shopt -u nullglob
-
+ 
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
 
