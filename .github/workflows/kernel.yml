@@ -90,10 +90,8 @@ jobs:
             export ARCH=arm
             export KBUILD_DEBARCH=armhf
           fi
-          export LOCALVERSION=
-          make LOCALVERSION= mrproper
-          make uz801v3_defconfig
-          make deb-pkg -j"$(nproc)"
+          make mrproper uz801v3_defconfig
+          make -j"$(nproc)" deb-pkg
           shopt -s nullglob
           files=(../*orig.tar.gz)
           if [ ${#files[@]} -gt 0 ]; then
