@@ -25,7 +25,9 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install git lsb-release ccache gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils lzop liblz4-tool binfmt-support qemu-user-static mkbootimg libmpc-dev
+          sudo apt-get -y install git lsb-release ccache bison flex build-essential bc kmod cpio flex libncurses5-dev libelf-dev \
+            libssl-dev dwarves bison crossbuild-essential-armhf fakeroot debhelper rsync wget patchutils \
+            xz-utils lzop liblz4-tool binfmt-support qemu-user-static mkbootimg
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
@@ -90,7 +92,7 @@ jobs:
             # export KBUILD_DEBARCH=armhf
           fi
           make mrproper uz801v3_defconfig
-          make -j"$(nproc)" bindeb-pkg
+          fakeroot make -j"$(nproc)" bindeb-pkg
  
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
