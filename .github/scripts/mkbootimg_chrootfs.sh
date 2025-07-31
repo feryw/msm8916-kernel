@@ -80,10 +80,16 @@ sudo umount "$ROOTFS_DIR/sys"
 KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
 INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
 DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
-echo "$KERNEL_IMG $INITRD_IMG $DTB_PATH"
 
+echo "kernel: $KERNEL_IMG , initrd: $INITRD_IMG , dtb : $DTB_PATH"
+
+echo 'cp "$KERNEL_IMG" Image.gz'
 cp "$KERNEL_IMG" Image.gz
+
+echo 'cp $INITRD_IMG" initrd.img'
 cp "$INITRD_IMG" initrd.img
+
+echo 'cp "$DTB_PATH" "$DTB_FILE"'
 cp "$DTB_PATH" "$DTB_FILE"
 
 echo "==> Building boot.img..."
