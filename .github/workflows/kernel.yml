@@ -36,6 +36,7 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/backup"
           cp arch/arm/configs/uz801v3_defconfig "${RUNNER_TEMP}/backup"
           cp arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916-ufi.dtsi "${RUNNER_TEMP}/backup"
           cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
           cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
           
