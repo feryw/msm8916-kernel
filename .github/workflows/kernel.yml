@@ -89,10 +89,10 @@ jobs:
             export CROSS_COMPILE=arm-linux-gnueabihf-
             export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
-            # export KBUILD_DEBARCH=armhf
+            export KBUILD_DEBARCH=armhf
           fi
           make mrproper uz801v3_defconfig
-          fakeroot make -j"$(nproc)" bindeb-pkg
+          fakeroot make -j"$(nproc)" bindeb-pkg -d
  
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
