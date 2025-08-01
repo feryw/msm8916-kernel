@@ -57,13 +57,15 @@ jobs:
               if [ "$STATUS" = "completed" ] && [ "$CONCLUSION" = "success" ]; then
                 echo "$RUN_ID" >> "success_${WORKFLOW_NAME}.txt"
               fi
+              
             done
 
             if [ -f "success_${WORKFLOW_NAME}.txt" ]; then
-              echo "Trimming old successful runs for $WORKFLOW_NAME"
-              tail -n +11 "success_${WORKFLOW_NAME}.txt" | while read -r OLD_ID; do
-                echo "Deleting old successful run ID: $OLD_ID"
-                echo y | gh run delete "$OLD_ID" --repo "$GITHUB_REPOSITORY"
-              done
+              echo "Deleting all successful runs for $WORKFLOW_NAME"
+              while read -r OLD_ID; do
+                echo "Deleting successful run ID: $OLD_ID"
+                gh run delete "$OLD_ID" --repo "$GITHUB_REPOSITORY" --confirm
+              done < "success_${WORKFLOW_NAME}.txt"
             fi
+            
           done < workflows.txt
