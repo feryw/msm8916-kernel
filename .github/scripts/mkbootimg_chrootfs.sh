@@ -6,9 +6,13 @@ ARCH="$1"
 if [ "$ARCH" == "arm64" ]; then
   DISTRO_ARCH="arm64"
   DTB_DIR="usr/lib/linux-image*/qcom"
+  CROSS_COMPILE="aarch64-linux-gnu-"
+  KERNEL_ARCH="arm64"
 else
   DISTRO_ARCH="armhf"
   DTB_DIR="usr/lib"
+  CROSS_COMPILE="arm-linux-gnueabihf-"
+  KERNEL_ARCH="arm"
 fi
 
 PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
@@ -20,7 +24,7 @@ DTB_FILE="msm8916-yiming-uz801v3.dtb"
 RAMDISK_FILE="initrd.img"
 ROOTFS_DIR="rootfs-$ARCH"
 ARTIFACTS_DIR="../../artifacts"
-DEB_IMAGE=$(realpath $ARTIFACTS_DIR/linux-image-*.deb)
+KERNEL_SRC_DIR="$(pwd)/../../"
 
 mkdir -p "$ROOTFS_DIR"
 
@@ -30,43 +34,44 @@ ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNL
 
 echo "==> Downloading rootfs from $ROOTFS_URL"
 curl -L -o rootfs.tar.xz "$ROOTFS_URL"
-
-# Extract rootfs
 tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
 rm rootfs.tar.xz
+
+# Copy kernel source into chroot
+echo "==> Copying kernel source..."
+mkdir -p "$ROOTFS_DIR/workspace"
+rsync -a --exclude='.git' "$KERNEL_SRC_DIR/" "$ROOTFS_DIR/workspace/"
 
 # Setup chroot script
 cat <<EOF | sudo tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
 #!/bin/bash
 set -e
-
 export DEBIAN_FRONTEND=noninteractive
 
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
-cat <<EOI > /etc/fstab
-PARTUUID=$PARTUUID / ext4 defaults,noatime,commit=600,errors=remount-ro 0 1
-tmpfs /tmp tmpfs defaults,nosuid 0 0
-EOI
-
 apt-get update
-apt-get install -y initramfs-tools wireless-regdb apt-utils
-dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
+apt-get install -y ccache build-essential bc kmod cpio flex libncurses5-dev libelf-dev \
+  libssl-dev dwarves bison crossbuild-essential-${DISTRO_ARCH} fakeroot debhelper rsync patchutils \
+  xz-utils lzop liblz4-tool binfmt-support mkbootimg initramfs-tools wireless-regdb apt-utils
+
+cd /workspace
+make ARCH=${KERNEL_ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
+make ARCH=${KERNEL_ARCH} CROSS_COMPILE=${CROSS_COMPILE} uz801v3_defconfig
+fakeroot make -j\$(nproc) ARCH=${KERNEL_ARCH} CROSS_COMPILE=${CROSS_COMPILE} CC="ccache ${CROSS_COMPILE}gcc" KBUILD_DEBARCH=${DISTRO_ARCH} bindeb-pkg -d
+
+dpkg -i ../linux-image-*.deb || apt-get install -f -y
 EOF
 
 chmod +x "$ROOTFS_DIR/tmp/chroot.sh"
-sudo cp "$DEB_IMAGE" "$ROOTFS_DIR/tmp/"
 
 # Bind mounts
-echo "==> Entering chroot to install kernel..."
+echo "==> Entering chroot to build kernel and install..."
 sudo mount --bind /proc "$ROOTFS_DIR/proc"
 sudo mount --bind /dev "$ROOTFS_DIR/dev"
 sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
 sudo mount --bind /sys "$ROOTFS_DIR/sys"
-
-sudo mkdir -p "$ROOTFS_DIR/etc"
-sudo rm -f "$ROOTFS_DIR/etc/resolv.conf"
-sudo cp /etc/resolv.conf "$ROOTFS_DIR/etc/resolv.conf"
+sudo cp /usr/bin/qemu-arm-static "$ROOTFS_DIR/usr/bin/"
 
 sudo chroot "$ROOTFS_DIR" /bin/bash /tmp/chroot.sh
 
@@ -81,20 +86,11 @@ KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
 INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
 DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
 
-echo "kernel: $KERNEL_IMG , initrd: $INITRD_IMG , dtb : $DTB_PATH"
-
-echo 'cp "$KERNEL_IMG" Image.gz'
 cp "$KERNEL_IMG" Image.gz
-
-echo 'cp $INITRD_IMG" initrd.img'
 cp "$INITRD_IMG" initrd.img
-
-echo 'cp "$DTB_PATH" "$DTB_FILE"'
 cp "$DTB_PATH" "$DTB_FILE"
 
 echo "==> Building boot.img..."
-cat Image.gz "$DTB_FILE" > kernel-dtb
-
 mkbootimg \
     --base 0x80000000 \
     --kernel_offset 0x00080000 \
@@ -107,6 +103,7 @@ mkbootimg \
     --kernel kernel-dtb -o boot.img
 
 mkdir -p "$ARTIFACTS_DIR"
+mv ../linux-*.deb "$ARTIFACTS_DIR/"
 mv boot.img "$ARTIFACTS_DIR/boot-$ARCH.img"
 
-echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-$ARCH.img"
+echo "==> Done. Artifacts saved in $ARTIFACTS_DIR"
