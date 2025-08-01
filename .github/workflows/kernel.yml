@@ -82,8 +82,10 @@ jobs:
           ARCH="${{ inputs.arch }}"
           if [ "$ARCH" = "arm64" ]; then
             echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
+            echo "DISTRO_ARCH=arm64" >> $GITHUB_OUTPUT
           else
             echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
+            echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
           fi
 
       - name: Download and extract rootfs
