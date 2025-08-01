@@ -91,8 +91,10 @@ jobs:
           DOWNLOAD_SERVER="images.linuxcontainers.org"
           INDEX_PATH="/meta/1.0/index-system"
           DISTRO="debian;bullseye;${{ steps.vars.outputs.DISTRO_ARCH }};default"
-          ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL https://$DOWNLOAD_SERVER$INDEX_PATH | grep "$DISTRO" | cut -f6 -d';')rootfs.tar.xz"
-          echo $ROOTFS_URL
+          ROOTFS_PATH=$(curl -fsSL "https://$DOWNLOAD_SERVER$INDEX_PATH" | grep "^$DISTRO;" | cut -f6 -d';')
+          echo "ROOTFS_PATH: $ROOTFS_PATH"
+          ROOTFS_URL="https://$DOWNLOAD_SERVER$ROOTFS_PATH/rootfs.tar.xz"
+          echo "ROOTFS_URL: $ROOTFS_URL"
           nslookup $DOWNLOAD_SERVER
           mkdir -p "$ROOTFS"
           curl -L "$ROOTFS_URL" -o rootfs.tar.xz
