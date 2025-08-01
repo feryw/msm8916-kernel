@@ -22,15 +22,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Prepare
+      - name: Install dependencies
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install git lsb-release bc kmod cpio rsync curl wget patchutils \
-            binfmt-support qemu-user-static mkbootimg
+          sudo apt-get -y install mkbootimg patchutils qemu-user-static
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
-
-      - name: Checkout HEAD Kernel Source
+          
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Backup files
@@ -46,7 +45,7 @@ jobs:
         run: |
           rm -rf * .[^.] .??*
     
-      - name: Check out code at specified commit
+      - name: Checkout respository at ${{ github.event.inputs.commit }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.commit }}
@@ -71,18 +70,113 @@ jobs:
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ github.ref }}
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ github.ref }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
 
-      - name: Build kernel and boot image
+      - name: Prepare build variables
+        id: vars
         run: |
-          cd .github/scripts
-          chmod +x ./mkbootimg_chrootfs.sh
-          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
+          ARCH="${{ inputs.arch }}"
+          if [ "$ARCH" = "arm64" ]; then
+            echo "DISTRO_ARCH=arm64" >> $GITHUB_OUTPUT
+            echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
+            echo "KERNEL_ARCH=arm64" >> $GITHUB_OUTPUT
+            echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
+          else
+            echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
+            echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
+            echo "KERNEL_ARCH=arm" >> $GITHUB_OUTPUT
+            echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download and extract rootfs
+        run: |
+          ROOTFS_DIR="rootfs-${{ inputs.arch }}"
+          DOWNLOAD_SERVER="images.linuxcontainers.org"
+          INDEX_PATH="/meta/1.0/index-system"
+          DISTRO="ubuntu;jammy;${{ steps.vars.outputs.DISTRO_ARCH }};default"
+          ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL https://$DOWNLOAD_SERVER$INDEX_PATH | grep "$DISTRO" | cut -f6 -d';')rootfs.tar.xz"
+          mkdir -p "$ROOTFS_DIR"
+          curl -L "$ROOTFS_URL" -o rootfs.tar.xz
+          tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
+          rm rootfs.tar.xz
+
+      - name: Sync kernel source into chroot
+        run: |
+          rsync -a --exclude='.git' ./ "rootfs-${{ inputs.arch }}/workspace"
+
+      - name: Prepare chroot build script
+        run: |
+          cat <<EOF | sudo tee rootfs-${{ inputs.arch }}/tmp/chroot.sh > /dev/null
+          #!/bin/bash
+          set -e
+          export DEBIAN_FRONTEND=noninteractive
+          echo "nameserver 8.8.8.8" > /etc/resolv.conf
+          apt-get update
+          apt-get install -y ccache build-essential bc kmod cpio flex libncurses5-dev libelf-dev \
+            libssl-dev dwarves bison crossbuild-essential-${{ steps.vars.outputs.DISTRO_ARCH }} fakeroot debhelper rsync patchutils \
+            xz-utils lzop liblz4-tool binfmt-support mkbootimg initramfs-tools wireless-regdb apt-utils
+          cd /workspace
+          make ARCH=${{ steps.vars.outputs.KERNEL_ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} mrproper
+          make ARCH=${{ steps.vars.outputs.KERNEL_ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} uz801v3_defconfig
+          fakeroot make -j\$(nproc) ARCH=${{ steps.vars.outputs.KERNEL_ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
+            CC="ccache ${CROSS_COMPILE}gcc" KBUILD_DEBARCH=${{ steps.vars.outputs.DISTRO_ARCH }} bindeb-pkg
+          dpkg -i ../linux-image-*.deb || apt-get install -f -y
+          EOF
+          chmod +x rootfs-${{ inputs.arch }}/tmp/chroot.sh
+
+      - name: Mount and enter chroot
+        run: |
+          ROOTFS="rootfs-${{ inputs.arch }}"
+          sudo mount --bind /proc "$ROOTFS/proc"
+          sudo mount --bind /dev "$ROOTFS/dev"
+          sudo mount --bind /dev/pts "$ROOTFS/dev/pts"
+          sudo mount --bind /sys "$ROOTFS/sys"
+          sudo cp /usr/bin/qemu-${{ inputs.arch == 'arm64' && 'aarch64' || 'arm' }}-static "$ROOTFS/usr/bin/"
+          sudo chroot "$ROOTFS" /bin/bash /tmp/chroot.sh
+          sudo umount "$ROOTFS/proc"
+          sudo umount "$ROOTFS/dev/pts"
+          sudo umount "$ROOTFS/dev"
+          sudo umount "$ROOTFS/sys"
+
+       - name: Extract and build boot.img
+        run: |
+          ROOTFS="rootfs-${{ inputs.arch }}"
+          DTB_FILE="msm8916-yiming-uz801v3.dtb"
+          RAMDISK_FILE="initrd.img"
+          PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
+          DTB_PATH=$(find "$ROOTFS/${{ steps.vars.outputs.DTB_DIR }}" -name "*uz801v3.dtb" | head -n1)
+          KERNEL_IMG=$(find "$ROOTFS/boot" -name "vmlinuz*" | head -n1)
+          INITRD_IMG=$(find "$ROOTFS/boot" -name "initrd.img*" | head -n1)
+          cp "$KERNEL_IMG" Image.gz
+          cp "$INITRD_IMG" "$RAMDISK_FILE"
+          cp "$DTB_PATH" "$DTB_FILE"
           
-      - name: Prepare artifacts
-        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
+          # Check if kernel-dtb exists
+          if [ ! -f "$ROOTFS_DIR/boot/kernel-dtb" ]; then
+            echo "kernel-dtb not found, generating manually..."
+            cat "$KERNEL_IMG" "$DTB_FILE" > kernel-dtb
+          else
+            echo "Using prebuilt kernel-dtb from rootfs"
+            cp "$ROOTFS_DIR/boot/kernel-dtb" .
+          fi
+          
+          mkbootimg \
+            --base 0x80000000 \
+            --kernel_offset 0x00080000 \
+            --ramdisk_offset 0x02000000 \
+            --tags_offset 0x01e00000 \
+            --pagesize 2048 \
+            --second_offset 0x00f00000 \
+            --ramdisk "$RAMDISK_FILE" \
+            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200 no_framebuffer=true rw" \
+            --kernel kernel-dtb -o boot.img
+
+          mkdir -p artifacts
+          REVISION=$(ls ../linux-image-* | cut -d'_' -f1 | cut -d'-' -f3 | head -n1)
+          mv ../linux-*${REVISION}* artifacts/
+          mv boot.img artifacts/boot-${{ inputs.arch }}.img
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -98,11 +192,14 @@ jobs:
           NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
           TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
           git log -1 --format=%b > changes.txt
+          
           gh release delete "$TAG_NAME" --yes || true
           git tag -d "$TAG_NAME" 2>/dev/null || true
           git push --delete origin "$TAG_NAME" 2>/dev/null || true
+          
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
+          
           echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
 
