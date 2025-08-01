@@ -15,21 +15,61 @@ jobs:
           sudo apt update
           sudo apt install -y gh jq
 
-      - name: Set current run ID from GitHub env
-        id: current
-        run: echo "current_run_id=${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
-        
-      - name: Delete failed and cancelled runs
+      - name: Get all workflows in the repository
+        id: workflows
         run: |
-          WORKFLOW_NAME="kernel.yml"
-          CURRENT_RUN_ID="${{ steps.current.outputs.current_run_id }}"
-          echo "Current run ID: $CURRENT_RUN_ID"
+          gh api repos/${{ github.repository }}/actions/workflows \
+            | jq -r '.workflows[].name' > workflows.txt
+          echo "Workflows found:"
+          cat workflows.txt
 
-          echo "Finding failed or cancelled runs for $WORKFLOW_NAME..."
-          gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,conclusion \
-            | jq -r --arg CURRENT "$CURRENT_RUN_ID" \
-              '.[] | select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled")) | .databaseId' \
-            | while read -r ID; do
-                if [ "$ID" = "$CURRENT_RUN_ID" ]; then
-                  echo "Skipping current run ID: $ID"
-                  contin
+      - name: Get currently running workflow run IDs
+        id: current_runs
+        run: |
+          gh run list --limit 100 --json databaseId,status \
+            | jq -r '.[] | select(.status == "in_progress" or .status == "queued") | .databaseId' > current_running.txt
+          echo "Currently running run IDs:"
+          cat current_running.txt
+        
+      - name: Delete failed/cancelled runs and old successful runs
+        run: |
+          while IFS= read -r WORKFLOW_NAME; do
+            echo "Processing workflow: $WORKFLOW_NAME"
+
+            # Get runs
+            gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,conclusion,createdAt \
+              | jq -c '.[]' | while read -r run; do
+                  RUN_ID=$(echo "$run" | jq -r '.databaseId')
+                  STATUS=$(echo "$run" | jq -r '.status')
+                  CONCLUSION=$(echo "$run" | jq -r '.conclusion')
+                  
+                  if grep -qx "$RUN_ID" current_running.txt; then
+                    echo "Skipping currently running run ID: $RUN_ID"
+                    continue
+                  fi
+
+                  # Delete failed/cancelled runs
+                  if [ "$STATUS" = "completed" ] && { [ "$CONCLUSION" = "failure" ] || [ "$CONCLUSION" = "cancelled" ]; }; then
+                    echo "Deleting failed/cancelled run ID: $RUN_ID"
+                    gh run delete "$RUN_ID" --yes
+                    continue
+                  fi
+
+                  # Collect successful runs
+                  if [ "$STATUS" = "completed" ] && [ "$CONCLUSION" = "success" ]; then
+                    echo "$RUN_ID" >> "success_${WORKFLOW_NAME}.txt"
+                  fi
+              done
+
+            # Trim successful runs (keep latest 10)
+            if [ -f "success_${WORKFLOW_NAME}.txt" ]; then
+              echo "Trimming old successful runs for $WORKFLOW_NAME"
+              tail -n +11 "success_${WORKFLOW_NAME}.txt" | while read -r OLD_ID; do
+                echo "Deleting old successful run ID: $OLD_ID"
+                gh run delete "$OLD_ID" --yes
+              done
+            fi
+
+          done < workflows.txt        
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
