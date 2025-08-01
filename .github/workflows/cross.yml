@@ -1,4 +1,4 @@
-
+l
 name: Cross Release kernel
 on:
   repository_dispatch:
@@ -29,7 +29,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install build-essential bc kmod cpio flex bison libncurses-dev libelf-dev libssl-dev \
             dwarves rsync xz-utils lzop liblz4-tool gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu ccache -y
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu ccache debhelper libssl-dev apt-utils -y
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
           echo "ROOTFS=rootfs-${{ inputs.arch }}" >> $GITHUB_ENV
