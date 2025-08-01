@@ -25,9 +25,8 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install git lsb-release ccache bison flex build-essential bc kmod cpio flex libncurses5-dev libelf-dev \
-            libssl-dev dwarves bison crossbuild-essential-armhf fakeroot debhelper rsync wget patchutils \
-            xz-utils lzop liblz4-tool binfmt-support qemu-user-static mkbootimg
+          sudo apt-get -y install git lsb-release bc kmod cpio rsync curl wget patchutils \
+            binfmt-support qemu-user-static mkbootimg
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
@@ -76,21 +75,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-kernel-build-
 
-      - name: Build kernel
+      - name: Build kernel and boot image
         run: |
-          export USE_CCACHE=1
-          export CCACHE_DIR=${{ github.workspace }}/.ccache
-          export PATH="/usr/lib/ccache:$PATH"
-          if [[ "${{ inputs.arch }}" == "arm64" ]]; then
-            export CROSS_COMPILE=aarch64-linux-gnu-
-            export CC='ccache aarch64-linux-gnu-gcc'
-            export ARCH=arm64
-          else
-            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mrproper
-            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- uz801v3_defconfig
-            fakeroot make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' KBUILD_DEBARCH=armhf bindeb-pkg -d
-          fi
- 
+          cd .github/scripts
+          chmod +x ./mkbootimg_chrootfs.sh
+          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
+          
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
 
@@ -100,12 +90,6 @@ jobs:
           name: kernel
           path: artifacts/*
           
-      - name: Make boot image
-        run: |
-          cd .github/scripts
-          chmod +x ./mkbootimg_chrootfs.sh
-          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
-
       - name: Generate release tag
         id: version
         env:
