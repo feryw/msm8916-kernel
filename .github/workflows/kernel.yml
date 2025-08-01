@@ -103,7 +103,7 @@ jobs:
 
       - name: Prepare chroot build script
         run: |
-          cat <<EOF | sudo tee rootfs-${{ inputs.arch }}/tmp/chroot.sh > /dev/null
+          install -m 755 /dev/stdin rootfs-${{ inputs.arch }}/tmp/chroot.sh <<'EOF'
           #!/bin/bash
           set -e
           export DEBIAN_FRONTEND=noninteractive
@@ -115,13 +115,8 @@ jobs:
           make mrproper
           make uz801v3_defconfig
           fakeroot make -j$(nproc) CC="ccache gcc" bindeb-pkg
-          
           dpkg -i ../linux-image-*.deb || apt-get install -f -y
           EOF
-          id
-          ls -al rootfs-${{ inputs.arch }}/tmp/chroot.sh
-          cat rootfs-${{ inputs.arch }}/tmp/chroot.sh
-          chmod +x rootfs-${{ inputs.arch }}/tmp/chroot.sh
 
       - name: Mount and enter chroot
         run: |
