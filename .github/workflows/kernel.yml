@@ -121,6 +121,7 @@ jobs:
           dpkg -L libgcc-10-dev | grep crtbeginS
           ldconfig -p | grep gcc
           cd /workspace
+          export LIBRARY_PATH=$LIBRARY_PATH:/usr/lib/arm-linux-gnueabihf:/usr/lib/gcc/arm-linux-gnueabihf/10
           make mrproper
           make uz801v3_defconfig
           fakeroot make -j$(nproc) CC="ccache gcc" bindeb-pkg
