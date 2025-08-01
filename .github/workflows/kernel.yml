@@ -123,7 +123,7 @@ jobs:
           dpkg -i ../linux-image-*.deb || apt-get install -f -y
           EOF
 
-      - name: Mount and enter chroot
+      - name: Build kernel inside container
         run: |
           mkdir -p "$ROOTFS/workspace"
           sudo mount --bind /proc "$ROOTFS/proc"
