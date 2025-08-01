@@ -94,10 +94,7 @@ jobs:
           INDEX_PATH="/meta/1.0/index-system"
           DISTRO="debian;bullseye;${{ steps.vars.outputs.DISTRO_ARCH }};default"
           ROOTFS_PATH=$(curl -fsSL "https://$DOWNLOAD_SERVER$INDEX_PATH" | grep "^$DISTRO;" | cut -f6 -d';')
-          echo "ROOTFS_PATH: $ROOTFS_PATH"
-          ROOTFS_URL="https://$DOWNLOAD_SERVER$ROOTFS_PATH/rootfs.tar.xz"
-          echo "ROOTFS_URL: $ROOTFS_URL"
-          nslookup $DOWNLOAD_SERVER
+          ROOTFS_URL="https://$DOWNLOAD_SERVER$ROOTFS_PATHrootfs.tar.xz"
           mkdir -p "$ROOTFS"
           curl -L "$ROOTFS_URL" -o rootfs.tar.xz
           tar -xf rootfs.tar.xz -C "$ROOTFS"
@@ -120,6 +117,9 @@ jobs:
           
           dpkg -i ../linux-image-*.deb || apt-get install -f -y
           EOF
+          id
+          ls -al rootfs-${{ inputs.arch }}/tmp/chroot.sh
+          cat rootfs-${{ inputs.arch }}/tmp/chroot.sh
           chmod +x rootfs-${{ inputs.arch }}/tmp/chroot.sh
 
       - name: Mount and enter chroot
