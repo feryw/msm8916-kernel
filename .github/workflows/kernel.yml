@@ -6,6 +6,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
+        default: 'v6.12.30-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -14,20 +15,57 @@ on:
         options:
           - arm64
           - armv7
-
+               
 jobs:
   build:
     name: Build kernel and boot image
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+    env:
+      ROOTFS: rootfs-${{ inputs.arch }}
     steps:
       - name: Install dependencies
         run: |
-          sudo apt-get -y update
-          sudo apt-get -y install mkbootimg patchutils qemu-user-static git
+          sudo apt-get update
+          sudo apt-get -y install ccache mkbootimg patchutils qemu-user-static
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
+          
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Backup files
+        run: |
+          mkdir -p "${RUNNER_TEMP}/backup"
+          cp arch/arm/configs/uz801v3_defconfig "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916-ufi.dtsi "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
+          
+      - name: Clean all files
+        run: |
+          rm -rf * .[^.] .??*
+    
+      - name: Checkout respository at ${{ github.event.inputs.commit }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit }}
+
+      - name: Restore defconfig & DTS
+        run: |
+          cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
+          cp $RUNNER_TEMP/backup/*.dts* arch/arm/boot/dts/qcom
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -C uptohigh
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "sync HEAD defconfig & DTS"
+          else
+            echo "No changes to commit"
+          fi
 
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
@@ -44,23 +82,16 @@ jobs:
         run: |
           ARCH="${{ inputs.arch }}"
           if [ "$ARCH" = "arm64" ]; then
-            echo "DISTRO_ARCH=arm64" >> $GITHUB_OUTPUT
-            echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
-            echo "KERNEL_ARCH=arm64" >> $GITHUB_OUTPUT
             echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
           else
-            echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
-            echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
-            echo "KERNEL_ARCH=arm" >> $GITHUB_OUTPUT
             echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
           fi
 
       - name: Download and extract rootfs
         run: |
-          ROOTFS_DIR="rootfs-${{ inputs.arch }}"
           DOWNLOAD_SERVER="images.linuxcontainers.org"
           INDEX_PATH="/meta/1.0/index-system"
-          DISTRO="ubuntu;jammy;${{ steps.vars.outputs.DISTRO_ARCH }};default"
+          DISTRO="debian;bullseye;${{ steps.vars.outputs.DISTRO_ARCH }};default"
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL https://$DOWNLOAD_SERVER$INDEX_PATH | grep "$DISTRO" | cut -f6 -d';')rootfs.tar.xz"
           mkdir -p "$ROOTFS_DIR"
           curl -L "$ROOTFS_URL" -o rootfs.tar.xz
@@ -74,67 +105,36 @@ jobs:
           set -e
           export DEBIAN_FRONTEND=noninteractive
           echo "nameserver 8.8.8.8" > /etc/resolv.conf
-          apt-get update
-          apt-get install -y git ccache build-essential bc kmod cpio flex libncurses5-dev libelf-dev \
-            libssl-dev dwarves bison crossbuild-essential-${{ steps.vars.outputs.DISTRO_ARCH }} fakeroot debhelper rsync patchutils \
-            xz-utils lzop liblz4-tool binfmt-support mkbootimg initramfs-tools wireless-regdb apt-utils
-
+          apt-get update 
+          apt-get install -y build-essential bc kmod cpio flex bison libncurses5-dev libelf-dev \
+            libssl-dev dwarves fakeroot debhelper rsync xz-utils ccache lzop libz4-tool
           cd /workspace
-
-          # Clone and checkout the kernel source
-          git clone https://github.com/${GITHUB_REPOSITORY}.git .
-          git checkout ${{ github.event.inputs.commit }}
-
-          # Restore specific files from HEAD of default branch
-          DEFAULT_BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
-          git fetch origin "$DEFAULT_BRANCH"
-
-          git show origin/$DEFAULT_BRANCH:arch/arm/configs/uz801v3_defconfig > arch/arm/configs/uz801v3_defconfig || true
-          git show origin/$DEFAULT_BRANCH:arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts > arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts || true
-          git show origin/$DEFAULT_BRANCH:arch/arm/boot/dts/qcom/msm8916-ufi.dtsi > arch/arm/boot/dts/qcom/msm8916-ufi.dtsi || true
-          git show origin/$DEFAULT_BRANCH:arch/arm/boot/dts/qcom/msm8916.dtsi > arch/arm/boot/dts/qcom/msm8916.dtsi || true
-          git show origin/$DEFAULT_BRANCH:arch/arm/boot/dts/qcom/pm8916.dtsi > arch/arm/boot/dts/qcom/pm8916.dtsi || true
+          make mrproper
+          make uz801v3_defconfig
+          fakeroot make -j$(nproc) CC="ccache gcc" bindeb-pkg
           
-          # Configure git user for auto commit (if needed)
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Commit defconfig/DTS updates only if needed
-          git switch -C uptohigh || git checkout -b uptohigh
-          git add .
-          if ! git diff --cached --quiet; then
-            git commit -m "sync HEAD defconfig & DTS"
-          else
-            echo "No changes to commit"
-          fi
-
-          make ARCH=${{ steps.vars.outputs.KERNEL_ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} mrproper
-          make ARCH=${{ steps.vars.outputs.KERNEL_ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} uz801v3_defconfig
-          fakeroot make -j\$(nproc) ARCH=${{ steps.vars.outputs.KERNEL_ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
-            CC="ccache ${CROSS_COMPILE}gcc" KBUILD_DEBARCH=${{ steps.vars.outputs.DISTRO_ARCH }} bindeb-pkg
-
           dpkg -i ../linux-image-*.deb || apt-get install -f -y
           EOF
           chmod +x rootfs-${{ inputs.arch }}/tmp/chroot.sh
 
       - name: Mount and enter chroot
         run: |
-          ROOTFS="rootfs-${{ inputs.arch }}"
           mkdir -p "$ROOTFS/workspace"
           sudo mount --bind /proc "$ROOTFS/proc"
           sudo mount --bind /dev "$ROOTFS/dev"
           sudo mount --bind /dev/pts "$ROOTFS/dev/pts"
           sudo mount --bind /sys "$ROOTFS/sys"
+          sudo mount --bind "$(pwd)" "$ROOTFS/workspace"
           sudo cp /usr/bin/qemu-${{ inputs.arch == 'arm64' && 'aarch64' || 'arm' }}-static "$ROOTFS/usr/bin/"
           sudo chroot "$ROOTFS" /bin/bash /tmp/chroot.sh
           sudo umount "$ROOTFS/proc"
           sudo umount "$ROOTFS/dev/pts"
           sudo umount "$ROOTFS/dev"
           sudo umount "$ROOTFS/sys"
+          sudo umount "$ROOTFS/workspace"
 
       - name: Extract and build boot.img
         run: |
-          ROOTFS="rootfs-${{ inputs.arch }}"
           DTB_FILE="msm8916-yiming-uz801v3.dtb"
           RAMDISK_FILE="initrd.img"
           PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
@@ -144,7 +144,7 @@ jobs:
           cp "$KERNEL_IMG" Image.gz
           cp "$INITRD_IMG" "$RAMDISK_FILE"
           cp "$DTB_PATH" "$DTB_FILE"
-
+          
           if [ ! -f "$ROOTFS/boot/kernel-dtb" ]; then
             echo "kernel-dtb not found, generating manually..."
             cat "$KERNEL_IMG" "$DTB_FILE" > kernel-dtb
@@ -152,7 +152,7 @@ jobs:
             echo "Using prebuilt kernel-dtb from rootfs"
             cp "$ROOTFS/boot/kernel-dtb" .
           fi
-
+          
           mkbootimg \
             --base 0x80000000 \
             --kernel_offset 0x00080000 \
@@ -165,8 +165,8 @@ jobs:
             --kernel kernel-dtb -o boot.img
 
           mkdir -p artifacts
-          REVISION=$(ls rootfs-${{ inputs.arch }}/workspace/../linux-image-* | cut -d'_' -f1 | cut -d'-' -f3 | head -n1)
-          mv rootfs-${{ inputs.arch }}/workspace/../linux-*${REVISION}* artifacts/
+          REVISION=$(ls ../linux-image-* | cut -d'_' -f1 | cut -d'-' -f3 | head -n1)
+          mv ../linux-*${REVISION}* artifacts/
           mv boot.img artifacts/boot-${{ inputs.arch }}.img
 
       - name: Upload artifacts
@@ -183,11 +183,14 @@ jobs:
           NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
           TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
           git log -1 --format=%b > changes.txt
+
           gh release delete "$TAG_NAME" --yes || true
           git tag -d "$TAG_NAME" 2>/dev/null || true
           git push --delete origin "$TAG_NAME" 2>/dev/null || true
+
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
+
           echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
 
