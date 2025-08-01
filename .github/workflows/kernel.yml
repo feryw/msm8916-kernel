@@ -103,6 +103,8 @@ jobs:
 
       - name: Prepare chroot build script
         run: |
+          mkdir -p rootfs-${{ inputs.arch }}/tmp
+          chmod 1777 rootfs-${{ inputs.arch }}/tmp
           install -m 755 /dev/stdin rootfs-${{ inputs.arch }}/tmp/chroot.sh <<'EOF'
           #!/bin/bash
           set -e
