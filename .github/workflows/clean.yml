@@ -8,32 +8,30 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
-      - name: Install GitHub CLI (if needed)
+      - name: Install GitHub CLI and jq
         run: |
-          if ! command -v gh &> /dev/null; then
-            sudo apt update && sudo apt install gh -y
-          fi
+          sudo apt update
+          sudo apt install -y gh jq
 
-      - name: List and delete failed/cancelled runs
+      - name: Get current run ID
+        id: current
         run: |
-          WORKFLOW_NAME="build.yml"  # Change to your workflow filename
-          echo "Fetching runs for $WORKFLOW_NAME..."
+          CURRENT_RUN_ID=$(gh run view --json databaseId | jq -r '.databaseId')
+          echo "current_run_id=$CURRENT_RUN_ID" >> "$GITHUB_OUTPUT"
 
-          RUN_IDS=$(gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status \
-            | jq -r '.[] | select(.status == "failure" or .status == "cancelled") | .databaseId')
-
-          for ID in $RUN_IDS; do
-            echo "Deleting run ID: $ID"
-            gh run delete "$ID" --yes
-          done
-
-      - name: Optionally delete old successful runs (older than N)
+      - name: Delete failed and cancelled runs
         run: |
-          SUCCESS_IDS=$(gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,createdAt \
-            | jq -r '.[] | select(.status == "success") | .databaseId' | tail -n +11)  # Keep latest 10
+          WORKFLOW_NAME="clean.yml"
+          CURRENT_RUN_ID="${{ steps.current.outputs.current_run_id }}"
+          echo "Current run ID: $CURRENT_RUN_ID"
 
-          for ID in $SUCCESS_IDS; do
-            echo "Deleting old successful run ID: $ID"
-            gh run delete "$ID" --yes
-          done
+          echo "Finding failed or cancelled runs for $WORKFLOW_NAME..."
+          gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,conclusion \
+            | jq -r --arg CURRENT "$CURRENT_RUN_ID" \
+              '.[] | select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled")) | .databaseId' \
+            | while read -r ID; do
+                if [ "$ID" = "$CURRENT_RUN_ID" ]; then
+                  echo "Skipping current run ID: $ID"
+                  contin
