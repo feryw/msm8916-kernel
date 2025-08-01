@@ -115,13 +115,14 @@ jobs:
           apt-get install -y apt-utils
           apt-get install -y build-essential gcc bc kmod cpio flex bison libncurses5-dev libelf-dev libssl-dev \
             dwarves fakeroot rsync xz-utils ccache lzop liblz4-tool libc6-dev libgcc-10-dev libc6-dev-armhf-cross
-          export HOSTCC="gcc -L/usr/lib/arm-linux-gnueabihf -L/usr/lib/gcc/arm-linux-gnueabihf/10"
-          export HOSTLD="ld"
-          export HOSTLDFLAGS="-L/usr/lib/arm-linux-gnueabihf -L/usr/lib/gcc/arm-linux-gnueabihf/10"
+          echo "ARCH:"
+          dpkg --print-architecture
+          echo "===="
+          
           cd /workspace
           make mrproper
           make uz801v3_defconfig
-          make -j$(nproc) HOSTCC="$HOSTCC" HOSTLD="$HOSTLD" HOSTLDFLAGS="$HOSTLDFLAGS" CC="ccache gcc" bindeb-pkg
+          make -j$(nproc) bindeb-pkg
           dpkg -i ../linux-image-*.deb || apt-get install -f -y
           EOF
 
