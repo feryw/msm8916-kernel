@@ -109,8 +109,6 @@ jobs:
           #!/bin/bash
           set -e
           export DEBIAN_FRONTEND=noninteractive
-          ls -al /
-          ls -al /tmp
           rm -f /etc/resolv.conf
           echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
           apt-get update 
