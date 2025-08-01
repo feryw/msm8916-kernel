@@ -1,0 +1,39 @@
+name: Cleanup Old Workflow Runs
+
+on:
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Install GitHub CLI (if needed)
+        run: |
+          if ! command -v gh &> /dev/null; then
+            sudo apt update && sudo apt install gh -y
+          fi
+
+      - name: List and delete failed/cancelled runs
+        run: |
+          WORKFLOW_NAME="build.yml"  # Change to your workflow filename
+          echo "Fetching runs for $WORKFLOW_NAME..."
+
+          RUN_IDS=$(gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status \
+            | jq -r '.[] | select(.status == "failure" or .status == "cancelled") | .databaseId')
+
+          for ID in $RUN_IDS; do
+            echo "Deleting run ID: $ID"
+            gh run delete "$ID" --yes
+          done
+
+      - name: Optionally delete old successful runs (older than N)
+        run: |
+          SUCCESS_IDS=$(gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,createdAt \
+            | jq -r '.[] | select(.status == "success") | .databaseId' | tail -n +11)  # Keep latest 10
+
+          for ID in $SUCCESS_IDS; do
+            echo "Deleting old successful run ID: $ID"
+            gh run delete "$ID" --yes
+          done
