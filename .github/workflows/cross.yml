@@ -1,4 +1,3 @@
-l
 name: Cross Release kernel
 on:
   repository_dispatch:
