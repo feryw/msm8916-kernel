@@ -15,15 +15,13 @@ jobs:
           sudo apt update
           sudo apt install -y gh jq
 
-      - name: Get current run ID
+      - name: Set current run ID from GitHub env
         id: current
-        run: |
-          CURRENT_RUN_ID=$(gh run view --json databaseId | jq -r '.databaseId')
-          echo "current_run_id=$CURRENT_RUN_ID" >> "$GITHUB_OUTPUT"
-
+        run: echo "current_run_id=${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+        
       - name: Delete failed and cancelled runs
         run: |
-          WORKFLOW_NAME="clean.yml"
+          WORKFLOW_NAME="kernel.yml"
           CURRENT_RUN_ID="${{ steps.current.outputs.current_run_id }}"
           echo "Current run ID: $CURRENT_RUN_ID"
 
