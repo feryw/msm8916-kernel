@@ -87,19 +87,26 @@ jobs:
             echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
             echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
             echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
-            echo "DISTRO_ARCH=arm64" >> $GITHUB_OUTPUT
+            echo "ARCH=arm64" >> $GITHUB_OUTPUT
           else
             echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
             echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
             echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_OUTPUT
+            echo "ARCH=arm" >> $GITHUB_OUTPUT
             echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
           fi
 
       - name: Build kernel
         run: |
           make mrproper
-          make uz801v3_defconfig
-          make -j$(nproc) bindeb-pkg
+          make ARCH=${{ steps.vars.outputs.ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} uz801v3_defconfig
+          make -j$(nproc) \
+            ARCH=${{ steps.vars.outputs.ARCH }} \
+            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
+            DEB_HOST_ARCH=${{ steps.vars.outputs.DISTRO_ARCH }} \
+            KBUILD_DEBARCH=${{ steps.vars.outputs.DISTRO_ARCH }} \
+            CC=${{ steps.vars.outputs.CC }} \
+            bindeb-pkg
 
       - name: Extract and build boot.img
         run: |
