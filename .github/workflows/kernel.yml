@@ -107,7 +107,8 @@ jobs:
           #!/bin/bash
           set -e
           export DEBIAN_FRONTEND=noninteractive
-          echo "nameserver 8.8.8.8" > /etc/resolv.conf
+          ls -al /etc/r*
+          echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf" > /dev/null
           apt-get update 
           apt-get install -y build-essential bc kmod cpio flex bison libncurses5-dev libelf-dev \
             libssl-dev dwarves fakeroot debhelper rsync xz-utils ccache lzop libz4-tool
