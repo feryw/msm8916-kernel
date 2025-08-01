@@ -1,0 +1,171 @@
+
+name: Release kernel
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit or tag to build'
+        required: true
+        default: 'v6.12.30-wyref'
+      arch:
+        description: "Target architecture"
+        required: true
+        default: 'armv7'
+        type: choice
+        options:
+          - arm64
+          - armv7
+               
+jobs:
+  build:
+    name: Build kernel and boot image
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential bc kmod cpio flex bison libncurses-dev libelf-dev libssl-dev \
+            dwarves rsync xz-utils lzop liblz4-tool gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu ccache -y
+          sudo timedatectl set-timezone Asia/Jakarta
+          sudo hostnamectl set-hostname wyref
+          echo "ROOTFS=rootfs-${{ inputs.arch }}" >> $GITHUB_ENV
+          
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Backup files
+        run: |
+          mkdir -p "${RUNNER_TEMP}/backup"
+          cp arch/arm/configs/uz801v3_defconfig "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916-ufi.dtsi "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
+          cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
+          
+      - name: Clean all files
+        run: |
+          rm -rf * .[^.] .??*
+    
+      - name: Checkout respository at ${{ github.event.inputs.commit }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit }}
+
+      - name: Restore defconfig & DTS
+        run: |
+          cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
+          cp $RUNNER_TEMP/backup/*.dts* arch/arm/boot/dts/qcom
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -C uptohigh
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "sync HEAD defconfig & DTS"
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Prepare repository
+        run: git config --global --add safe.directory "$(pwd)"
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
+
+      - name: Prepare build variables
+        id: vars
+        run: |
+          ARCH="${{ inputs.arch }}"
+          if [ "$ARCH" = "arm64" ]; then
+            echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
+            echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
+            echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
+            echo "DISTRO_ARCH=arm64" >> $GITHUB_OUTPUT
+          else
+            echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
+            echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
+            echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_OUTPUT
+            echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build kernel
+        run: |
+          make mrproper
+          make uz801v3_defconfig
+          make -j$(nproc) bindeb-pkg
+
+      - name: Extract and build boot.img
+        run: |
+          DTB_FILE="msm8916-yiming-uz801v3.dtb"
+          RAMDISK_FILE="initrd.img"
+          PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
+          DTB_PATH=$(find "$ROOTFS/${{ steps.vars.outputs.DTB_DIR }}" -name "*uz801v3.dtb" | head -n1)
+          KERNEL_IMG=$(find "$ROOTFS/boot" -name "vmlinuz*" | head -n1)
+          INITRD_IMG=$(find "$ROOTFS/boot" -name "initrd.img*" | head -n1)
+          cp "$KERNEL_IMG" Image.gz
+          cp "$INITRD_IMG" "$RAMDISK_FILE"
+          cp "$DTB_PATH" "$DTB_FILE"
+          
+          if [ ! -f "$ROOTFS/boot/kernel-dtb" ]; then
+            echo "kernel-dtb not found, generating manually..."
+            cat "$KERNEL_IMG" "$DTB_FILE" > kernel-dtb
+          else
+            echo "Using prebuilt kernel-dtb from rootfs"
+            cp "$ROOTFS/boot/kernel-dtb" .
+          fi
+          
+          mkbootimg \
+            --base 0x80000000 \
+            --kernel_offset 0x00080000 \
+            --ramdisk_offset 0x02000000 \
+            --tags_offset 0x01e00000 \
+            --pagesize 2048 \
+            --second_offset 0x00f00000 \
+            --ramdisk "$RAMDISK_FILE" \
+            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200 no_framebuffer=true rw" \
+            --kernel kernel-dtb -o boot.img
+
+          mkdir -p artifacts
+          REVISION=$(ls ../linux-image-* | cut -d'_' -f1 | cut -d'-' -f3 | head -n1)
+          mv ../linux-*${REVISION}* artifacts/
+          mv boot.img artifacts/boot-${{ inputs.arch }}.img
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: artifacts/*
+
+      - name: Generate release tag
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
+          TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
+          git log -1 --format=%b > changes.txt
+
+          gh release delete "$TAG_NAME" --yes || true
+          git tag -d "$TAG_NAME" 2>/dev/null || true
+          git push --delete origin "$TAG_NAME" 2>/dev/null || true
+
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+          echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.version.outputs.NAME }}
+          tag_name: ${{ steps.version.outputs.TAG_NAME }}
+          body_path: changes.txt
+          files: artifacts/*
