@@ -122,7 +122,7 @@ jobs:
           cd /workspace
           make mrproper
           make uz801v3_defconfig
-          fakeroot make -j$(nproc) CC="ccache gcc" bindeb-pkg
+          make -j$(nproc) CC="ccache gcc" bindeb-pkg
           dpkg -i ../linux-image-*.deb || apt-get install -f -y
           EOF
 
