@@ -92,9 +92,9 @@ jobs:
           INDEX_PATH="/meta/1.0/index-system"
           DISTRO="debian;bullseye;${{ steps.vars.outputs.DISTRO_ARCH }};default"
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL https://$DOWNLOAD_SERVER$INDEX_PATH | grep "$DISTRO" | cut -f6 -d';')rootfs.tar.xz"
-          mkdir -p "$ROOTFS_DIR"
+          mkdir -p "$ROOTFS"
           curl -L "$ROOTFS_URL" -o rootfs.tar.xz
-          tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
+          tar -xf rootfs.tar.xz -C "$ROOTFS"
           rm rootfs.tar.xz
 
       - name: Prepare chroot build script
