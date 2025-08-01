@@ -94,7 +94,8 @@ jobs:
           INDEX_PATH="/meta/1.0/index-system"
           DISTRO="debian;bullseye;${{ steps.vars.outputs.DISTRO_ARCH }};default"
           ROOTFS_PATH=$(curl -fsSL "https://$DOWNLOAD_SERVER$INDEX_PATH" | grep "^$DISTRO;" | cut -f6 -d';')
-          ROOTFS_URL="https://$DOWNLOAD_SERVER$ROOTFS_PATHrootfs.tar.xz"
+          ROOTFS_URL="https://$DOWNLOAD_SERVER$ROOTFS_PATH/rootfs.tar.xz"
+          echo "ROOTFS_URL: $ROOTFS_URL"
           mkdir -p "$ROOTFS"
           curl -L "$ROOTFS_URL" -o rootfs.tar.xz
           tar -xf rootfs.tar.xz -C "$ROOTFS"
