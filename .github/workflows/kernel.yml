@@ -113,15 +113,13 @@ jobs:
           echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
           apt-get update
           apt-get install -y apt-utils
-          apt-get install -y build-essential gcc bc kmod cpio flex bison libncurses5-dev libelf-dev \
-            libssl-dev dwarves fakeroot rsync xz-utils ccache lzop liblz4-tool libc6-dev libgcc-10-dev
-          echo "find Scrt:"
-          dpkg -L libc6-dev | grep Scrt1
-          echo "find crtbeginS:"
-          dpkg -L libgcc-10-dev | grep crtbeginS
-          ldconfig -p | grep gcc
+          apt-get install -y build-essential gcc bc kmod cpio flex bison libncurses5-dev libelf-dev libssl-dev \
+            dwarves fakeroot rsync xz-utils ccache lzop liblz4-tool libc6-dev libgcc-10-dev libc6-dev-armhf-cross
+          ln -sf /usr/lib/arm-linux-gnueabihf/Scrt1.o /usr/lib/Scrt1.o || true
+          ln -sf /usr/lib/arm-linux-gnueabihf/crti.o /usr/lib/crti.o || true
+          ln -sf /usr/lib/gcc/arm-linux-gnueabihf/10/crtbeginS.o /usr/lib/crtbeginS.o || true
+          ln -sf /lib/arm-linux-gnueabihf/libgcc_s.so.1 /lib/libgcc_s.so.1 || true
           cd /workspace
-          export LIBRARY_PATH=$LIBRARY_PATH:/usr/lib/arm-linux-gnueabihf:/usr/lib/gcc/arm-linux-gnueabihf/10
           make mrproper
           make uz801v3_defconfig
           fakeroot make -j$(nproc) CC="ccache gcc" bindeb-pkg
