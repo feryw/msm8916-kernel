@@ -32,44 +32,39 @@ jobs:
           cat current_running.txt
         
       - name: Delete failed/cancelled runs and old successful runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           while IFS= read -r WORKFLOW_NAME; do
             echo "Processing workflow: $WORKFLOW_NAME"
-
-            # Get runs
-            gh run list --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,conclusion,createdAt \
+            gh run list --repo "$GITHUB_REPOSITORY" --workflow="$WORKFLOW_NAME" --limit 100 --json databaseId,status,conclusion,createdAt \
               | jq -c '.[]' | while read -r run; do
-                  RUN_ID=$(echo "$run" | jq -r '.databaseId')
-                  STATUS=$(echo "$run" | jq -r '.status')
-                  CONCLUSION=$(echo "$run" | jq -r '.conclusion')
-                  
-                  if grep -qx "$RUN_ID" current_running.txt; then
-                    echo "Skipping currently running run ID: $RUN_ID"
-                    continue
-                  fi
+                RUN_ID=$(echo "$run" | jq -r '.databaseId')
+                STATUS=$(echo "$run" | jq -r '.status')
+                CONCLUSION=$(echo "$run" | jq -r '.conclusion')
 
-                  # Delete failed/cancelled runs
-                  if [ "$STATUS" = "completed" ] && { [ "$CONCLUSION" = "failure" ] || [ "$CONCLUSION" = "cancelled" ]; }; then
-                    echo "Deleting failed/cancelled run ID: $RUN_ID"
-                    gh run delete "$RUN_ID" --yes
-                    continue
-                  fi
+                if grep -qx "$RUN_ID" current_running.txt; then
+                  echo "Skipping currently running run ID: $RUN_ID"
+                  continue
+                fi
 
-                  # Collect successful runs
-                  if [ "$STATUS" = "completed" ] && [ "$CONCLUSION" = "success" ]; then
-                    echo "$RUN_ID" >> "success_${WORKFLOW_NAME}.txt"
-                  fi
-              done
+                if [ "$STATUS" = "completed" ] && { [ "$CONCLUSION" = "failure" ] || [ "$CONCLUSION" = "cancelled" ]; }; then
+                  echo "Deleting failed/cancelled run ID: $RUN_ID"
+                  gh run delete "$RUN_ID" --repo "$GITHUB_REPOSITORY" --yes
+                  continue
+                fi
 
-            # Trim successful runs (keep latest 10)
+                if [ "$STATUS" = "completed" ] && [ "$CONCLUSION" = "success" ]; then
+                  echo "$RUN_ID" >> "success_${WORKFLOW_NAME}.txt"
+                fi
+            done
+
             if [ -f "success_${WORKFLOW_NAME}.txt" ]; then
-              echo "Trimming old successful runs for $WORKFLOW_NAME"
-              tail -n +11 "success_${WORKFLOW_NAME}.txt" | while read -r OLD_ID; do
-                echo "Deleting old successful run ID: $OLD_ID"
-                gh run delete "$OLD_ID" --yes
-              done
+            echo "Trimming old successful runs for $WORKFLOW_NAME"
+            tail -n +11 "success_${WORKFLOW_NAME}.txt" | while read -r OLD_ID; do
+              echo "Deleting old successful run ID: $OLD_ID"
+              gh run delete "$OLD_ID" --repo "$GITHUB_REPOSITORY" --yes
+            done
             fi
+          done < workflows.txt
 
-          done < workflows.txt        
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
