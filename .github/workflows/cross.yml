@@ -1,5 +1,5 @@
 
-name: Release kernel
+name: Cross Release kernel
 on:
   repository_dispatch:
   workflow_dispatch:
