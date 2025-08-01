@@ -102,10 +102,8 @@ jobs:
           make -j$(nproc) \
             ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
-            DEB_HOST_ARCH=${{ steps.vars.outputs.DISTRO_ARCH }} \
-            KBUILD_DEBARCH=${{ steps.vars.outputs.DISTRO_ARCH }} \
             CC=${{ steps.vars.outputs.CC }} \
-            bindeb-pkg
+            Image dtbs modules
 
       - name: Extract and build boot.img
         run: |
