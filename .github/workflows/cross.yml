@@ -158,10 +158,11 @@ jobs:
           rm rootfs.tar.xz
 
           echo "Binding /dev, /proc, /sys for chroot use..."
-          mount --bind /dev alpine-chroot/dev
-          mount --bind /proc alpine-chroot/proc
-          mount --bind /sys alpine-chroot/sys
-          cp /etc/resolv.conf alpine-chroot/etc/
+          sudo mount --bind /dev alpine-chroot/dev
+          sudo mount --bind /proc alpine-chroot/proc
+          sudo mount --bind /sys alpine-chroot/sys
+          rm alpine-chroot/etc/resolv.conf
+          echo "nameserver 8.8.8.8" | tee alpine-chroot/etc/resolv.conf
 
           echo "Copying built kernel modules into chroot..."
           mkdir -p alpine-chroot/lib/modules
