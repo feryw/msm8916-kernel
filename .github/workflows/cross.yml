@@ -222,8 +222,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
-          TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
+          TAG_NAME=$(echo v${{ steps.kernelver.outputs.VERSION }}-${{ inputs.arch }})
           git log -1 --format=%b > changes.txt
 
           gh release delete "$TAG_NAME" --yes || true
