@@ -141,47 +141,42 @@ jobs:
           mv dtb-${{ steps.kernelver.outputs.VERSION }}.tar.gz artifacts/
           mv modules-${{ steps.kernelver.outputs.VERSION }}.tar.gz artifacts/
 
-      - name: Generate initrd.img using Alpine chroot
+      - name: Generate initrd.img using Alpine Docker
         run: |
           set -e
 
           ALPINE_VERSION=3.22
-          TIMESTAMP=20250801_13:02
-          ROOTFS_URL="https://images.linuxcontainers.org/images/alpine/${ALPINE_VERSION}/${{ steps.vars.outputs.DISTRO_ARCH}}/default/${TIMESTAMP}/rootfs.tar.xz"
-          echo $ROOTFS_URL
-
-          mkdir -p alpine-chroot
-
-          echo "Downloading Alpine rootfs for ${{ steps.vars.outputs.DISTRO_ARCH}}..."
-          wget -q "$ROOTFS_URL" -O rootfs.tar.xz
-          tar -xf rootfs.tar.xz -C alpine-chroot
-          rm rootfs.tar.xz
-
-          echo "Binding /dev, /proc, /sys for chroot use..."
-          sudo mount --bind /dev alpine-chroot/dev
-          sudo mount --bind /proc alpine-chroot/proc
-          sudo mount --bind /sys alpine-chroot/sys
-          rm alpine-chroot/etc/resolv.conf
-          echo "nameserver 8.8.8.8" | tee alpine-chroot/etc/resolv.conf
-
-          echo "Copying built kernel modules into chroot..."
-          mkdir -p alpine-chroot/lib/modules
-          cp -r out/modules/lib/modules/${{ steps.kernelver.outputs.VERSION }} alpine-chroot/lib/modules/
-
-          echo "Entering chroot and building initrd.img..."
-          chroot alpine-chroot /bin/sh -c "
+          MODULES_VERSION=${{ steps.kernelver.outputs.VERSION }}
+          DISTRO_ARCH=${{ steps.vars.outputs.DISTRO_ARCH }}
+      
+          echo "Preparing Docker mount directories..."
+          mkdir -p docker-root/lib/modules
+          cp -r out/modules/lib/modules/${MODULES_VERSION} docker-root/lib/modules/
+      
+          echo "Copying vmlinuz and System.map for mkinitfs reference..."
+          cp out/boot/vmlinuz-${MODULES_VERSION} docker-root/boot || true
+          cp out/boot/System.map-${MODULES_VERSION} docker-root/boot || true
+      
+          echo "Running Alpine container to generate initrd.img using mkinitfs..."
+          docker run --rm -v "$PWD/docker-root:/mnt" alpine:$ALPINE_VERSION /bin/sh -c "
             set -e
             apk update
             apk add mkinitfs busybox linux-firmware e2fsprogs-extra udev-init-scripts iproute2
-            mkinitfs -o /boot/initrd.img ${{ steps.kernelver.outputs.VERSION }}
+      
+            mkdir -p /lib/modules
+            cp -r /mnt/lib/modules/${MODULES_VERSION} /lib/modules/
+      
+            mkdir -p /boot
+            [ -f /mnt/boot/vmlinuz-${MODULES_VERSION} ] && cp /mnt/boot/vmlinuz-${MODULES_VERSION} /boot/vmlinuz || true
+            [ -f /mnt/boot/System.map-${MODULES_VERSION} ] && cp /mnt/boot/System.map-${MODULES_VERSION} /boot/System.map || true
+      
+            echo 'Generating initrd.img with'
+            mkinitfs -o /mnt/initrd.img-${MODULES_VERSION} ${MODULES_VERSION}
           "
-
-          echo "Exiting chroot and cleaning up..."
-          umount dev proc sys
-
-          echo "Copying initrd.img to out/boot..."
-          cp alpine-chroot/boot/initrd.img out/boot/initrd.img-${{ steps.kernelver.outputs.VERSION }}
-
+      
+          echo "Copying generated initrd.img to out/boot..."
+          cp docker-root/initrd.img-${MODULES_VERSION} out/boot/
+     
       - name: Extract and build boot.img
         run: |
           DTB_FILE="msm8916-yiming-uz801v3.dtb"
