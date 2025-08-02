@@ -172,6 +172,7 @@ jobs:
       
             echo 'Generating initrd.img with'
             mkinitfs -o /mnt/initrd.img-${MODULES_VERSION} ${MODULES_VERSION}
+            chmod 644 /mnt/initrd.img-${MODULES_VERSION}
           "
       
           echo "Copying generated initrd.img to out/boot..."
