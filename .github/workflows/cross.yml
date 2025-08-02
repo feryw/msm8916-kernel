@@ -107,7 +107,10 @@ jobs:
           mkdir -p out/dtb
           
           make mrproper
-          make ARCH=${{ steps.vars.outputs.ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} uz801v3_defconfig
+          make ARCH=${{ steps.vars.outputs.ARCH }} \
+            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} 
+            LOCALVERSION= \
+            uz801v3_defconfig
           make -j$(nproc) \
             ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
@@ -142,12 +145,12 @@ jobs:
 
           ALPINE_VERSION=3.22
           TIMESTAMP=20250801_13:02
-          ROOTFS_URL="https://images.linuxcontainers.org/images/alpine/${ALPINE_VERSION}/${{ steps.vars.outputs.ARCH}}/default/${TIMESTAMP}/rootfs.tar.xz"
+          ROOTFS_URL="https://images.linuxcontainers.org/images/alpine/${ALPINE_VERSION}/${{ steps.vars.outputs.DISTRO_ARCH}}/default/${TIMESTAMP}/rootfs.tar.xz"
           echo $ROOTFS_URL
 
           mkdir -p alpine-chroot
 
-          echo "Downloading Alpine rootfs for ${{ steps.vars.outputs.ARCH}}..."
+          echo "Downloading Alpine rootfs for ${{ steps.vars.outputs.DISTRO_ARCH}}..."
           wget -q "$ROOTFS_URL" -O rootfs.tar.xz
           tar -xf rootfs.tar.xz -C alpine-chroot
           rm rootfs.tar.xz
