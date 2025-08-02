@@ -107,14 +107,16 @@ jobs:
           mkdir -p out/dtb
           
           make mrproper
+          
           make ARCH=${{ steps.vars.outputs.ARCH }} \
-            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} 
-            LOCALVERSION= \
+            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             uz801v3_defconfig
+            
           make -j$(nproc) \
             ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             CC=${{ steps.vars.outputs.CC }} \
+            LOCALVERSION= \
             Image dtbs modules
 
           [ -f "arch/${{ steps.vars.outputs.ARCH }}/boot/Image" ] || { echo "Error: Image not found."; exit 1; }
