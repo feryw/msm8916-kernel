@@ -83,20 +83,29 @@ jobs:
         run: |
           ARCH="${{ inputs.arch }}"
           if [ "$ARCH" = "arm64" ]; then
-            echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
             echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
             echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
           else
-            echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
             echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
             echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm" >> $GITHUB_OUTPUT
             echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
           fi
 
+      - name: Prepare version variables
+        id: kernelver
+        run: |
+          RAW_COMMIT="${{ inputs.commit }}"
+          VERSION="${RAW_COMMIT#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          
       - name: Build kernel
         run: |
+          mkdir -p out/boot
+          mkdir -p out/modules
+          mkdir -p out/dtb
+          
           make mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} uz801v3_defconfig
           make -j$(nproc) \
@@ -105,24 +114,84 @@ jobs:
             CC=${{ steps.vars.outputs.CC }} \
             Image dtbs modules
 
+          [ -f "arch/${{ steps.vars.outputs.ARCH }}/boot/Image" ] || { echo "Error: Image not found."; exit 1; }
+          [ -f "System.map" ] || { echo "Error: System.map not found."; exit 1; }
+          
+          cp "arch/${{ steps.vars.outputs.ARCH}}/boot/Image" out/boot/vmlinuz-${{ steps.kernelver.outputs.VERSION }}
+          cp System.map out/boot/System.map-${{ steps.kernelver.outputs.VERSION }}
+          tar -czf "boot-${{ steps.kernelver.outputs.VERSION }}.tar.gz" -C out/boot .
+
+          find arch/${{ steps.vars.outputs.ARCH}}/boot/dts -name '*.dtb' -exec cp --parents {} out/dtb/ \;
+          tar -czf "dtb-${{ steps.kernelver.outputs.VERSION }}.tar.gz" -C out/dtb .
+          
+          make -j$(nproc) \
+            ARCH=${{ steps.vars.outputs.ARCH }} \
+            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
+            CC=${{ steps.vars.outputs.CC }} \
+            modules_install INSTALL_MOD_PATH=out/modules
+          tar -czf "modules-${{ steps.kernelver.outputs.VERSION }}.tar.gz" -C out/modules .
+
+          mkdir -p artifacts
+          mv boot-${{ steps.kernelver.outputs.VERSION }}.tar.gz artifacts/
+          mv dtb-${{ steps.kernelver.outputs.VERSION }}.tar.gz artifacts/
+          mv modules-${{ steps.kernelver.outputs.VERSION }}.tar.gz artifacts/
+
+      - name: Generate initrd.img using Alpine chroot
+        run: |
+          set -e
+
+          ALPINE_VERSION=3.22
+          ROOTFS_URL="https://images.linuxcontainers.org/images/alpine/${ALPINE_VERSION}/${{ steps.vars.outputs.ARCH }}/default/20250801_13:02/rootfs.tar.xz"
+
+          mkdir -p alpine-chroot
+
+          echo "Downloading Alpine rootfs for $ALPINE_ARCH..."
+          wget -q "$ROOTFS_URL" -O rootfs.tar.xz
+          tar -xf rootfs.tar.xz -C alpine-chroot
+          rm rootfs.tar.xz
+
+          echo "Binding /dev, /proc, /sys for chroot use..."
+          mount --bind /dev alpine-chroot/dev
+          mount --bind /proc alpine-chroot/proc
+          mount --bind /sys alpine-chroot/sys
+          cp /etc/resolv.conf alpine-chroot/etc/
+
+          echo "Copying built kernel modules into chroot..."
+          mkdir -p alpine-chroot/lib/modules
+          cp -r out/modules/lib/modules/${{ steps.kernelver.outputs.VERSION }} alpine-chroot/lib/modules/
+
+          echo "Entering chroot and building initrd.img..."
+          chroot alpine-chroot /bin/sh -c "
+            set -e
+            apk update
+            apk add mkinitfs busybox linux-firmware e2fsprogs-extra udev-init-scripts iproute2
+            mkinitfs -o /boot/initrd.img ${{ steps.kernelver.outputs.VERSION }}
+          "
+
+          echo "Exiting chroot and cleaning up..."
+          umount dev proc sys
+
+          echo "Copying initrd.img to out/boot..."
+          cp alpine-chroot/boot/initrd.img out/boot/initrd.img-${{ steps.kernelver.outputs.VERSION }}
+
       - name: Extract and build boot.img
         run: |
           DTB_FILE="msm8916-yiming-uz801v3.dtb"
           RAMDISK_FILE="initrd.img"
           PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
-          DTB_PATH=$(find "$ROOTFS/${{ steps.vars.outputs.DTB_DIR }}" -name "*uz801v3.dtb" | head -n1)
-          KERNEL_IMG=$(find "$ROOTFS/boot" -name "vmlinuz*" | head -n1)
-          INITRD_IMG=$(find "$ROOTFS/boot" -name "initrd.img*" | head -n1)
-          cp "$KERNEL_IMG" Image.gz
+          DTB_PATH=$(find "out/dtb" -name "*uz801v3.dtb" | head -n1)
+          KERNEL_IMG=$(find "out/boot" -name "vmlinuz*" | head -n1)
+          INITRD_IMG=$(find "out/boot" -name "initrd.img*" | head -n1)
+          cp "$KERNEL_IMG" Image.lzo
           cp "$INITRD_IMG" "$RAMDISK_FILE"
           cp "$DTB_PATH" "$DTB_FILE"
           
-          if [ ! -f "$ROOTFS/boot/kernel-dtb" ]; then
+          if [ ! -f out/boot/kernel-dtb" ]; then
             echo "kernel-dtb not found, generating manually..."
             cat "$KERNEL_IMG" "$DTB_FILE" > kernel-dtb
           else
             echo "Using prebuilt kernel-dtb from rootfs"
-            cp "$ROOTFS/boot/kernel-dtb" .
+            cp "out/boot/kernel-dtb" .
           fi
           
           mkbootimg \
@@ -133,13 +202,10 @@ jobs:
             --pagesize 2048 \
             --second_offset 0x00f00000 \
             --ramdisk "$RAMDISK_FILE" \
-            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200 no_framebuffer=true rw" \
+            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
             --kernel kernel-dtb -o boot.img
 
-          mkdir -p artifacts
-          REVISION=$(ls ../linux-image-* | cut -d'_' -f1 | cut -d'-' -f3 | head -n1)
-          mv ../linux-*${REVISION}* artifacts/
-          mv boot.img artifacts/boot-${{ inputs.arch }}.img
+          mv boot.img artifacts/boot-${{ inputs.arch }}-${{ steps.kernelver.outputs.VERSION }}.img
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
