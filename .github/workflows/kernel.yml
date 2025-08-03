@@ -19,18 +19,19 @@ on:
 jobs:
   build:
     name: Build kernel
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-22.04
+    container: 
+      image: debian:bullseye
+      options: --hostname uz801
     steps:
-      - name: Prepare
+      - name: Install dependencies
         run: |
-          sudo dpkg --add-architecture armhf
           sudo apt-get -y update
           sudo apt-get -y install libc6-dev make bzip2 libdpkg-perl lto-disabled-list patch perl tar xz-utils gnupg gpgv \
-            fakeroot gcc-9 gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool gdb libssl-dev libssl-dev:armhf \
+            fakeroot gcc-9-aarch64-linux-gnu gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool gdb libssl-dev libssl-dev:armhf \
             libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool apt-utils
           sudo timedatectl set-timezone Asia/Jakarta
-          sudo hostnamectl set-hostname wyref
-
+    
       - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
 
@@ -84,27 +85,19 @@ jobs:
           export CCACHE_DIR=${{ github.workspace }}/.ccache
           export PATH="/usr/lib/ccache:$PATH"
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
-            export CC='ccache gcc-9'
+            export CROSS_COMPILE=aarch64-linux-gnu-
+            export CC='ccache aarch64-linux-gnu-gcc-9'
+             export ARCH=arm64
           else
             export CROSS_COMPILE=arm-linux-gnueabihf-
             export CC='ccache arm-linux-gnueabihf-gcc-9'
             export ARCH=arm
-            export KBUILD_DEBARCH=armhf
           fi
           export LOCALVERSION=
           make LOCALVERSION= mrproper
           make uz801v3_defconfig
           make bindeb-pkg -j"$(nproc)"
-          shopt -s nullglob
-          files=(../*orig.tar.gz)
-          if [ ${#files[@]} -gt 0 ]; then
-            echo "Deleting ${#files[@]} file(s): ${files[*]}"
-            rm "${files[@]}"
-          else
-            echo "No orig.tar.gz files found."
-          fi
-          shopt -u nullglob
-
+  
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
 
