@@ -150,7 +150,7 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install binfmt-support qemu-user-static mkbootimg apt-utils
+          sudo apt-get -y install rsync qemu-user-static mkbootimg
           mkdir artifacts
 
       - name: Checkout
