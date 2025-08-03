@@ -110,12 +110,16 @@ jobs:
           export CCACHE_DIR=${{ github.workspace }}/.ccache
           export PATH="/usr/lib/ccache:$PATH"
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
+            update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9 90
+            update-alternatives --set aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9
             export CROSS_COMPILE=aarch64-linux-gnu-
-            export CC='ccache aarch64-linux-gnu-gcc-9'
-             export ARCH=arm64
+            export CC='ccache aarch64-linux-gnu-gcc'
+            export ARCH=arm64
           else
+            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
+            update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
             export CROSS_COMPILE=arm-linux-gnueabihf-
-            export CC='ccache arm-linux-gnueabihf-gcc-9'
+            export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
           fi
           export LOCALVERSION=
