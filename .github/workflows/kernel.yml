@@ -112,6 +112,7 @@ jobs:
           export CCACHE_DIR=${{ github.workspace }}/.ccache
           export PATH="/usr/lib/ccache:$PATH"
           export KBUILD_DEBARCH=amd64
+          export LOCALVERSION=
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
             update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9 90
             update-alternatives --set aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9
@@ -125,7 +126,7 @@ jobs:
             export CC='ccache arm-linux-gnueabihf-gcc'
             export ARCH=arm
           fi
-          export LOCALVERSION=
+
           make LOCALVERSION= mrproper
           make uz801v3_defconfig
           make -j"$(nproc)" bindeb-pkg
