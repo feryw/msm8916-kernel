@@ -31,49 +31,32 @@ jobs:
             gcc-9-aarch64-linux-gnu gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool gdb libssl-dev \
             libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool apt-utils systemd
             
-        ZONE="Asia/Jakarta"
-        ZONEFILE="/usr/share/zoneinfo/$ZONE"
+          ZONE="Asia/Jakarta"
+          ZONEFILE="/usr/share/zoneinfo/$ZONE"
+          CURRENT_ZONE=$(readlink -f /etc/localtime 2>/dev/null || echo "")
 
-        if [ -L /etc/localtime ] || [ -f /etc/localtime ]; then
-          CURRENT_ZONE=$(readlink -f /etc/localtime)
           if [ "$CURRENT_ZONE" = "$ZONEFILE" ]; then
             echo "[INFO] Timezone is already set to $ZONE"
-            exit 0
           else
-            echo "[INFO] Current timezone is $CURRENT_ZONE, will update to $ZONE"
-          fi
-        else
-          echo "[INFO] /etc/localtime does not exist, will create it"
-        fi
-
-        if [ -e "$ZONEFILE" ]; then
-          echo "[INFO] Timezone file found: $ZONEFILE"
-          ln -sf "$ZONEFILE" /etc/localtime
-          echo "$ZONE" > /etc/timezone
-          if command -v dpkg-reconfigure >/dev/null 2>&1; then
-            dpkg-reconfigure -f noninteractive tzdata
-          else
-            echo "[WARN] 'dpkg-reconfigure' not found, skipping tzdata reconfigure"
-          fi
-        else
-          echo "[ERROR] Timezone file not found: $ZONEFILE"
-          echo "[INFO] Attempting to install 'tzdata' package..."
-          apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
-          if [ -e "$ZONEFILE" ]; then
-            echo "[INFO] Retrying timezone setup after installing tzdata..."
-            ln -sf "$ZONEFILE" /etc/localtime
-            echo "$ZONE" > /etc/timezone
-            if command -v dpkg-reconfigure >/dev/null 2>&1; then
-              dpkg-reconfigure -f noninteractive tzdata
-            else
-              echo "[WARN] 'dpkg-reconfigure' not found, skipping tzdata reconfigure"
+            echo "[INFO] Timezone will be set to $ZONE"
+            if [ ! -e "$ZONEFILE" ]; then
+              echo "[WARN] Zonefile $ZONEFILE not found, installing tzdata..."
+              apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
             fi
-          else
-            echo "[FATAL] Still cannot find $ZONEFILE after installing tzdata"
-            exit 1
+            if [ -e "$ZONEFILE" ]; then
+              ln -sf "$ZONEFILE" /etc/localtime
+              echo "$ZONE" > /etc/timezone
+              if command -v dpkg-reconfigure >/dev/null 2>&1; then
+                dpkg-reconfigure -f noninteractive tzdata
+              else
+                echo "[WARN] dpkg-reconfigure not available, skipping"
+              fi
+            else
+              echo "[FATAL] Zonefile still not found after installing tzdata"
+              exit 1
+            fi
           fi
-        fi
-    
+
       - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
 
