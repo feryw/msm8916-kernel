@@ -25,7 +25,9 @@ jobs:
         run: |
           sudo dpkg --add-architecture armhf
           sudo apt-get -y update
-          sudo apt-get -y install git lsb-release ccache gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev:armhf libssl-dev:arm64 libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils lzop liblz4-tool
+          sudo apt-get -y install libc6-dev make bzip2 libdpkg-perl lto-disabled-list patch perl tar xz-utils gnupg gpgv \
+            fakeroot gcc-9 gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool gdb libssl-dev libssl-dev:armhf \
+            libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool apt-utils
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
@@ -82,12 +84,10 @@ jobs:
           export CCACHE_DIR=${{ github.workspace }}/.ccache
           export PATH="/usr/lib/ccache:$PATH"
           if [[ "${{ inputs.arch }}" == "arm64" ]]; then
-            export CROSS_COMPILE=aarch64-linux-gnu-
-            export CC='ccache aarch64-linux-gnu-gcc'
-            export ARCH=arm64
+            export CC='ccache gcc-9'
           else
             export CROSS_COMPILE=arm-linux-gnueabihf-
-            export CC='ccache arm-linux-gnueabihf-gcc'
+            export CC='ccache arm-linux-gnueabihf-gcc-9'
             export ARCH=arm
             export KBUILD_DEBARCH=armhf
           fi
@@ -124,7 +124,7 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install binfmt-support qemu-user-static mkbootimg
+          sudo apt-get -y install binfmt-support qemu-user-static mkbootimg apt-utils
           mkdir artifacts
 
       - name: Checkout
