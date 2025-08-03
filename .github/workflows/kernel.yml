@@ -80,6 +80,23 @@ jobs:
 
       - name: Restore defconfig & DTS
         run: |
+          echo "Current directory: $(pwd)"
+          echo "Checking for .git directory..."
+          if [ ! -d .git ]; then
+            echo "[WARN] Not in a Git repository. Attempting to change to GITHUB_WORKSPACE..."
+            cd "$GITHUB_WORKSPACE"
+            echo "Now in directory: $(pwd)"
+            if [ ! -d .git ]; then
+              echo "[FATAL] Still not inside a Git repository. Aborting."
+              ls -alh
+              exit 1
+            else
+              echo "[OK] Successfully entered Git repository at $GITHUB_WORKSPACE"
+            fi
+          else
+            echo "[OK] Already inside a Git repository"
+          fi
+          
           cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
           cp $RUNNER_TEMP/backup/*.dts* arch/arm/boot/dts/qcom
           git config user.name "github-actions[bot]"
