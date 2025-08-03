@@ -27,9 +27,10 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get -y update
+          DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive apt-get -y install libc6-dev make bzip2 libdpkg-perl patch perl tar xz-utils \
             gnupg gpgv fakeroot gcc-9-aarch64-linux-gnu gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool \
-            gdb libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool apt-utils git
+            gdb libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool git
             
           ZONE="Asia/Jakarta"
           ZONEFILE="/usr/share/zoneinfo/$ZONE"
