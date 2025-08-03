@@ -49,7 +49,7 @@ jobs:
         run: |
           rm -rf * .[^.] .??*
     
-      - name: Checkout respository at ${{ github.event.inputs.commit }}
+      - name: Checkout repository at ${{ github.event.inputs.commit }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.commit }}
@@ -105,13 +105,16 @@ jobs:
           mkdir -p out/boot
           mkdir -p out/modules
           mkdir -p out/dtb
-          
+
           make mrproper
           
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             uz801v3_defconfig
-            
+
+          git diff
+          git status
+          
           make -j$(nproc) \
             ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
