@@ -1,5 +1,4 @@
-
-name: Release kernel deb packages
+name: Release deb packages kernel
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -7,6 +6,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
+        default: 'v6.12.30-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -101,9 +101,9 @@ jobs:
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ github.ref }}
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ github.ref }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
 
       - name: Build
         run: |
