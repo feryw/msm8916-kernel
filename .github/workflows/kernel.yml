@@ -1,4 +1,5 @@
-name: Release kernel
+
+name: Release kernel deb packages
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -6,7 +7,6 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
-        default: 'v6.12.30-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -15,23 +15,21 @@ on:
         options:
           - arm64
           - armv7
-               
+      
 jobs:
   build:
-    name: Build kernel and boot image
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
+    name: Build kernel
+    runs-on: ubuntu-22.04-arm
     steps:
-      - name: Install dependencies
+      - name: Prepare
         run: |
-          sudo apt-get update
-          sudo apt-get -y install ccache mkbootimg patchutils qemu-user-static
+          sudo dpkg --add-architecture armhf
+          sudo apt-get -y update
+          sudo apt-get -y install git lsb-release ccache gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf bison flex build-essential libssl-dev:armhf libssl-dev:arm64 libelf-dev debhelper bc rsync kmod cpio wget patchutils xz-utils lzop liblz4-tool
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
-          echo "ROOTFS=rootfs-${{ inputs.arch }}" >> $GITHUB_ENV
-          
-      - name: Checkout repository
+
+      - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
 
       - name: Backup files
@@ -47,7 +45,7 @@ jobs:
         run: |
           rm -rf * .[^.] .??*
     
-      - name: Checkout respository at ${{ github.event.inputs.commit }}
+      - name: Check out code at specified commit
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.commit }}
@@ -59,7 +57,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git switch -C uptohigh
+          git status
           git add .
+          git status
           if ! git diff --cached --quiet; then
             git commit -m "sync HEAD defconfig & DTS"
           else
@@ -72,117 +72,75 @@ jobs:
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ github.ref }}
+          key: ${{ runner.os }}-kernel-build-${{ github.ref }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
+            ${{ runner.os }}-kernel-build-
 
-      - name: Prepare build variables
-        id: vars
+      - name: Build
         run: |
-          ARCH="${{ inputs.arch }}"
-          if [ "$ARCH" = "arm64" ]; then
-            echo "DTB_DIR=usr/lib/linux-image*/qcom" >> $GITHUB_OUTPUT
-            echo "DISTRO_ARCH=arm64" >> $GITHUB_OUTPUT
+          export USE_CCACHE=1
+          export CCACHE_DIR=${{ github.workspace }}/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          if [[ "${{ inputs.arch }}" == "arm64" ]]; then
+            export CROSS_COMPILE=aarch64-linux-gnu-
+            export CC='ccache aarch64-linux-gnu-gcc'
+            export ARCH=arm64
           else
-            echo "DTB_DIR=usr/lib" >> $GITHUB_OUTPUT
-            echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
+            export CROSS_COMPILE=arm-linux-gnueabihf-
+            export CC='ccache arm-linux-gnueabihf-gcc'
+            export ARCH=arm
+            export KBUILD_DEBARCH=armhf
           fi
-
-      - name: Download and extract rootfs
-        run: |
-          DOWNLOAD_SERVER="images.linuxcontainers.org"
-          INDEX_PATH="/meta/1.0/index-system"
-          DISTRO="debian;bullseye;${{ steps.vars.outputs.DISTRO_ARCH }};default"
-          ROOTFS_PATH=$(curl -fsSL "https://$DOWNLOAD_SERVER$INDEX_PATH" | grep "^$DISTRO;" | cut -f6 -d';')
-          ROOTFS_URL="https://$DOWNLOAD_SERVER$ROOTFS_PATH/rootfs.tar.xz"
-          echo "ROOTFS_URL: $ROOTFS_URL"
-          mkdir -p "$ROOTFS"
-          curl -L "$ROOTFS_URL" -o rootfs.tar.xz
-          tar -xf rootfs.tar.xz -C "$ROOTFS"
-          rm rootfs.tar.xz
-
-      - name: Prepare chroot build script
-        run: |
-          mkdir -p rootfs-${{ inputs.arch }}/tmp
-          chmod 1777 rootfs-${{ inputs.arch }}/tmp
-          install -m 755 /dev/stdin rootfs-${{ inputs.arch }}/tmp/chroot.sh <<'EOF'
-          #!/bin/bash
-          set -e
-          export DEBIAN_FRONTEND=noninteractive
-          rm -f /etc/resolv.conf
-          echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
-          apt-get update
-          apt-get install -y apt-utils
-          apt-get install -y build-essential gcc bc kmod cpio flex bison libncurses5-dev libelf-dev libssl-dev \
-            dwarves fakeroot rsync xz-utils ccache lzop liblz4-tool libc6-dev libgcc-10-dev libc6-dev-armhf-cross
-          echo "ARCH:"
-          dpkg --print-architecture
-          echo "===="
-          
-          cd /workspace
-          make mrproper
+          export LOCALVERSION=
+          make LOCALVERSION= mrproper
           make uz801v3_defconfig
-          make -j$(nproc) bindeb-pkg
-          dpkg -i ../linux-image-*.deb || apt-get install -f -y
-          EOF
-
-      - name: Build kernel inside container
-        run: |
-          mkdir -p "$ROOTFS/workspace"
-          sudo mount --bind /proc "$ROOTFS/proc"
-          sudo mount --bind /dev "$ROOTFS/dev"
-          sudo mount --bind /dev/pts "$ROOTFS/dev/pts"
-          sudo mount --bind /sys "$ROOTFS/sys"
-          sudo mount --bind "$(pwd)" "$ROOTFS/workspace"
-          sudo cp /usr/bin/qemu-${{ inputs.arch == 'arm64' && 'aarch64' || 'arm' }}-static "$ROOTFS/usr/bin/"
-          sudo chroot "$ROOTFS" /bin/bash /tmp/chroot.sh
-          sudo umount "$ROOTFS/proc"
-          sudo umount "$ROOTFS/dev/pts"
-          sudo umount "$ROOTFS/dev"
-          sudo umount "$ROOTFS/sys"
-          sudo umount "$ROOTFS/workspace"
-
-      - name: Extract and build boot.img
-        run: |
-          DTB_FILE="msm8916-yiming-uz801v3.dtb"
-          RAMDISK_FILE="initrd.img"
-          PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
-          DTB_PATH=$(find "$ROOTFS/${{ steps.vars.outputs.DTB_DIR }}" -name "*uz801v3.dtb" | head -n1)
-          KERNEL_IMG=$(find "$ROOTFS/boot" -name "vmlinuz*" | head -n1)
-          INITRD_IMG=$(find "$ROOTFS/boot" -name "initrd.img*" | head -n1)
-          cp "$KERNEL_IMG" Image.gz
-          cp "$INITRD_IMG" "$RAMDISK_FILE"
-          cp "$DTB_PATH" "$DTB_FILE"
-          
-          if [ ! -f "$ROOTFS/boot/kernel-dtb" ]; then
-            echo "kernel-dtb not found, generating manually..."
-            cat "$KERNEL_IMG" "$DTB_FILE" > kernel-dtb
+          make bindeb-pkg -j"$(nproc)"
+          shopt -s nullglob
+          files=(../*orig.tar.gz)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "Deleting ${#files[@]} file(s): ${files[*]}"
+            rm "${files[@]}"
           else
-            echo "Using prebuilt kernel-dtb from rootfs"
-            cp "$ROOTFS/boot/kernel-dtb" .
+            echo "No orig.tar.gz files found."
           fi
-          
-          mkbootimg \
-            --base 0x80000000 \
-            --kernel_offset 0x00080000 \
-            --ramdisk_offset 0x02000000 \
-            --tags_offset 0x01e00000 \
-            --pagesize 2048 \
-            --second_offset 0x00f00000 \
-            --ramdisk "$RAMDISK_FILE" \
-            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200 no_framebuffer=true rw" \
-            --kernel kernel-dtb -o boot.img
+          shopt -u nullglob
 
-          mkdir -p artifacts
-          REVISION=$(ls ../linux-image-* | cut -d'_' -f1 | cut -d'-' -f3 | head -n1)
-          mv ../linux-*${REVISION}* artifacts/
-          mv boot.img artifacts/boot-${{ inputs.arch }}.img
+      - name: Prepare artifacts
+        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: kernel
           path: artifacts/*
+
+  bootimg:
+    permissions:
+      contents: write
+    name: Make boot images
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Prepare
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install binfmt-support qemu-user-static mkbootimg
+          mkdir artifacts
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download kernel
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel
+          path: artifacts
+
+      - name: Build
+        run: |
+          cd .github/scripts
+          chmod +x ./mkbootimg_chrootfs.sh
+          sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
 
       - name: Generate release tag
         id: version
@@ -192,14 +150,11 @@ jobs:
           NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
           TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
           git log -1 --format=%b > changes.txt
-
           gh release delete "$TAG_NAME" --yes || true
           git tag -d "$TAG_NAME" 2>/dev/null || true
           git push --delete origin "$TAG_NAME" 2>/dev/null || true
-
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
-
           echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
 
