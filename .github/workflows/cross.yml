@@ -114,6 +114,7 @@ jobs:
 
           git diff
           git status
+          grep SUBLEVEL Makefile
           
           make -j$(nproc) \
             ARCH=${{ steps.vars.outputs.ARCH }} \
