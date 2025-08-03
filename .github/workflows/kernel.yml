@@ -23,6 +23,9 @@ jobs:
     container: 
       image: debian:bullseye
       options: --hostname uz801
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - name: Install dependencies
         run: |
@@ -69,10 +72,6 @@ jobs:
           cp arch/arm/boot/dts/qcom/msm8916-ufi.dtsi "${RUNNER_TEMP}/backup"
           cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
           cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
-          
-      - name: Clean all files
-        run: |
-          rm -rf * .[^.] .??*
     
       - name: Check out code at specified commit
         uses: actions/checkout@v4
