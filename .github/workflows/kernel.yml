@@ -127,7 +127,6 @@ jobs:
         run: |
           export USE_CCACHE=1
           export PATH="/usr/lib/ccache:$PATH"
-          export KBUILD_DEBARCH=amd64
           
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
