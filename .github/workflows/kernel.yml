@@ -112,6 +112,7 @@ jobs:
             echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
             echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
+            export DEB_HOST_ARCH=arm64
             update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9 90
             update-alternatives --set aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9
           else
@@ -119,6 +120,7 @@ jobs:
             echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm" >> $GITHUB_OUTPUT
             echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
+            export DEB_HOST_ARCH=armhf
             update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
             update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
           fi
@@ -127,6 +129,8 @@ jobs:
         run: |
           export USE_CCACHE=1
           export PATH="/usr/lib/ccache:$PATH"
+          export DEB_BUILD_ARCH=amd64
+          export DEB_CROSS=yes
           
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
