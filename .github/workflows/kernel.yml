@@ -126,7 +126,6 @@ jobs:
       - name: Build kernel
         run: |
           export USE_CCACHE=1
-          export CCACHE_DIR=${{ github.workspace }}/.ccache
           export PATH="/usr/lib/ccache:$PATH"
           export KBUILD_DEBARCH=amd64
           
