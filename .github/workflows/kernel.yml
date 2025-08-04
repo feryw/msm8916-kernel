@@ -107,8 +107,8 @@ jobs:
       - name: Prepare build variables
         id: vars
         run: |
-          ARCH="${{ inputs.arch }}"
-          if [ "$ARCH" = "armv8" ]; then
+          SARCH="${{ inputs.arch }}"
+          if [ "$SARCH" = "armv8" ]; then
             echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
             echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
@@ -132,7 +132,7 @@ jobs:
           
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
-            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \\
+            CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             uz801v3_defconfig
             
           make ARCH=${{ steps.vars.outputs.ARCH }} \
