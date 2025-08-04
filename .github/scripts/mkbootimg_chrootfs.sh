@@ -51,7 +51,7 @@ echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 apt-get update
 apt-get install -y initramfs-tools
-dpkg -i -y /tmp/*.deb
+dpkg -i /tmp/*.deb
 
 EOF
 
