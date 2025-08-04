@@ -32,9 +32,8 @@ jobs:
           apt-get -y update
           DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive apt-get -y install libc6-dev make bzip2 libdpkg-perl patch perl tar xz-utils \
-            gnupg gpgv fakeroot gcc-aarch64-linux-gnu gcc-9-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
-            autoconf automake bison flex libtool libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils \
-            lzop liblz4-tool git lsb-release bash ccache
+            gnupg gpgv fakeroot gcc-9-aarch64-linux-gnu gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool \
+            libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool git lsb-release bash ccache
             
           ZONE="Asia/Jakarta"
           ZONEFILE="/usr/share/zoneinfo/$ZONE"
@@ -105,29 +104,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
 
-      - name: Build
+      - name: Prepare build variables
+        id: vars
         run: |
-          bash
-          export USE_CCACHE=1
-          export CCACHE_DIR=${{ github.workspace }}/.ccache
-          export PATH="/usr/lib/ccache:$PATH"
-          export KBUILD_DEBARCH=amd64
           ARCH="${{ inputs.arch }}"
-          if [[ "$ARCH" == "arm64" ]]; then
-            update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9 90
-            update-alternatives --set aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9
+          if [ "$ARCH" = "arm64" ]; then
             echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
             echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
+            update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9 90
+            update-alternatives --set aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9
           else
-            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
-            update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
             echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
             echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm" >> $GITHUB_OUTPUT
             echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
+            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
+            update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
           fi
-
+          
+      - name: Build kernel
+        run: |
+          export USE_CCACHE=1
+          export CCACHE_DIR=${{ github.workspace }}/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          export KBUILD_DEBARCH=amd64
+          
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \\
