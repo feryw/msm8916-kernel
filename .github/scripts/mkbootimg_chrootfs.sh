@@ -21,7 +21,7 @@ DOWNLOAD_DISTRO="debian;bullseye;${DISTRO_ARCH};default"
 
 DTB_FILE="msm8916-yiming-uz801v3.dtb"
 RAMDISK_FILE="initrd.img"
-ROOTFS_DIR="rootfs-$ARCH"
+ROOTFS_DIR="rootfs-$DISTRO_ARCH"
 
 mkdir -p "$ROOTFS_DIR"
 
