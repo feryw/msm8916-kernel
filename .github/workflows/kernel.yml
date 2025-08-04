@@ -137,7 +137,7 @@ jobs:
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             CC=${{ steps.vars.outputs.CC }} \
-            -j"$(nproc)" bindeb-pkg
+            -j"$(nproc)" deb-pkg
   
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
