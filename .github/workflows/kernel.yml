@@ -131,11 +131,13 @@ jobs:
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
+            LOCALVERSION= \
             uz801v3_defconfig
             
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             CC=${{ steps.vars.outputs.CC }} \
+            LOCALVERSION= \
             -j"$(nproc)" deb-pkg
   
       - name: Prepare artifacts
