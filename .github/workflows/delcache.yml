@@ -1,0 +1,38 @@
+name: Cleanup Old Caches
+
+on:
+  workflow_dispatch:  # Trigger manually from GitHub UI
+
+jobs:
+  cleancache:
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh jq
+
+      - name: Delete all caches
+        run: |
+          REPO="${{ github.repository }}"
+          echo "Fetching caches for $REPO"
+
+          # List all cache IDs
+          CACHE_IDS=$(gh api --paginate \
+            -H "Accept: application/vnd.github+json" \
+            /repos/$REPO/actions/caches | \
+            jq -r '.actions_caches[].id')
+
+          if [ -z "$CACHE_IDS" ]; then
+            echo "No caches found."
+            exit 0
+          fi
+
+          for ID in $CACHE_IDS; do
+            echo "Deleting cache ID $ID"
+            gh api -X DELETE \
+              -H "Accept: application/vnd.github+json" \
+              /repos/$REPO/actions/caches/$ID
+          done
+
