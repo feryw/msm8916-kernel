@@ -32,8 +32,9 @@ jobs:
           apt-get -y update
           DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive apt-get -y install libc6-dev make bzip2 libdpkg-perl patch perl tar xz-utils \
-            gnupg gpgv fakeroot gcc-9-aarch64-linux-gnu gcc-9-arm-linux-gnueabihf autoconf automake bison flex libtool \
-            libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool git lsb-release bash ccache
+            gnupg gpgv fakeroot gcc-aarch64-linux-gnu gcc-9-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
+            autoconf automake bison flex libtool libssl-dev libelf-dev debhelper bc rsync kmod cpio wget patchutils \
+            lzop liblz4-tool git lsb-release bash ccache
             
           ZONE="Asia/Jakarta"
           ZONEFILE="/usr/share/zoneinfo/$ZONE"
