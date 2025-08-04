@@ -145,7 +145,8 @@ jobs:
             LOCALVERSION= \
             -j"$(nproc)" bindeb-pkg
 
-          for f in ../*.deb ../*.changes ../*.buildinfo; do
+          for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
+            [ -e "$f" ] || continue
             mv "$f" "${f/_amd64./_armhf.}"
           done
   
