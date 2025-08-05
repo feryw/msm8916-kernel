@@ -131,6 +131,10 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           export KBUILD_BUILD_HOST=amd64
           export KDEB_ARCH=${{ steps.vars.outputs.DISTRO_ARCH }}
+          export KBUILD_BUILD_VERSION=1
+          export KBUILD_BUILD_TIMESTAMP="$(date -u +"%Y-%m-%d %T")"
+          export DEBEMAIL="ferywu@gmail.com"
+          export DEBFULLNAME="CI Kernel Builder"
           
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
@@ -144,6 +148,10 @@ jobs:
             LOCALVERSION= \
             -j"$(nproc)"
 
+          ARCH=${{ steps.vars.outputs.ARCH }} \
+          CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
+          CC=${{ steps.vars.outputs.CC }} \
+          LOCALVERSION= \
           scripts/package/builddeb
 
           # for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
