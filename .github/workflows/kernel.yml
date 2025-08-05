@@ -159,7 +159,7 @@ jobs:
           LOCALVERSION= \
           O=build \
           scripts/package/builddeb "$(pwd)"
-          find build
+          find . -name "*.deb"
 
           # for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
           #   [ -e "$f" ] || continue
