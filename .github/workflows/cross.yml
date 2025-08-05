@@ -27,8 +27,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install build-essential bc kmod cpio flex bison libncurses-dev libelf-dev libssl-dev \
-            dwarves rsync xz-utils lzop liblz4-tool gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu ccache debhelper libssl-dev apt-utils android-tools-mkbootimg -y
+            dwarves rsync xz-utils lzop liblz4-tool gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
+            gcc-aarch64-linux-gnu gcc-9-aarch64-linux-gnu ccache debhelper libssl-dev apt-utils \
+            android-tools-mkbootimg -y
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
           echo "ROOTFS=rootfs-${{ inputs.arch }}" >> $GITHUB_ENV
@@ -86,11 +87,15 @@ jobs:
             echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_OUTPUT
             echo "CC='ccache aarch64-linux-gnu-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm64" >> $GITHUB_OUTPUT
+            update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9 90
+            update-alternatives --set aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-9
           else
             echo "CROSS_COMPILE=arm-linux-gnueabihf-" >> $GITHUB_OUTPUT
             echo "CC='ccache arm-linux-gnueabihf-gcc'" >> $GITHUB_OUTPUT
             echo "ARCH=arm" >> $GITHUB_OUTPUT
             echo "DISTRO_ARCH=armhf" >> $GITHUB_OUTPUT
+            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
+            update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
           fi
 
       - name: Prepare version variables
