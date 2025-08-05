@@ -121,7 +121,7 @@ jobs:
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             CC=${{ steps.vars.outputs.CC }} \
             LOCALVERSION= \
-            Image dtbs modules
+            zImage modules dtbs
 
           [ -f "arch/${{ steps.vars.outputs.ARCH }}/boot/Image" ] || { echo "Error: Image not found."; exit 1; }
           [ -f "System.map" ] || { echo "Error: System.map not found."; exit 1; }
@@ -165,7 +165,7 @@ jobs:
           docker run --rm -v "$PWD/docker-root:/mnt" alpine:$ALPINE_VERSION /bin/sh -c "
             set -e
             apk update
-            apk add mkinitfs busybox linux-firmware e2fsprogs-extra udev-init-scripts iproute2
+            apk add mkinitfs busybox e2fsprogs-extra udev-init-scripts iproute2
       
             mkdir -p /lib/modules
             cp -r /mnt/lib/modules/${MODULES_VERSION} /lib/modules/
@@ -190,7 +190,10 @@ jobs:
           DTB_PATH=$(find "out/dtb" -name "*uz801v3.dtb" | head -n1)
           KERNEL_IMG=$(find "out/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "out/boot" -name "initrd.img*" | head -n1)
-          cp "$KERNEL_IMG" Image.lzo
+          echo "Kernel: $KERNEL_IMG"
+          echo "Initrd: $INITRD_IMG"
+          echo "DTB Path: $DTB_PATH"
+          cp "$KERNEL_IMG" Image.gz
           cp "$INITRD_IMG" "$RAMDISK_FILE"
           cp "$DTB_PATH" "$DTB_FILE"
           
@@ -213,7 +216,7 @@ jobs:
             --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
             --kernel kernel-dtb -o boot.img
 
-          mv boot.img artifacts/boot-${{ inputs.arch }}-${{ steps.kernelver.outputs.VERSION }}.img
+          mv boot.img artifacts/boot-${{ steps.kernelver.outputs.VERSION }}-${{ inputs.arch }}.img
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
