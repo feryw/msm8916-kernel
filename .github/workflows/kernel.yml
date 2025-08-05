@@ -136,28 +136,30 @@ jobs:
           export KBUILD_BUILD_TIMESTAMP="$(date -u +"%Y-%m-%d %T")"
           export DEBEMAIL="ferywu@gmail.com"
           export DEBFULLNAME="CI Kernel Builder"
+
+          mkdir -p build
           
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             LOCALVERSION= \
+            O=build \
             uz801v3_defconfig
             
           make ARCH=${{ steps.vars.outputs.ARCH }} \
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             CC=${{ steps.vars.outputs.CC }} \
             LOCALVERSION= \
+            O=build \
             -j"$(nproc)"
-
+          
           ARCH=${{ steps.vars.outputs.ARCH }} \
           CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
           CC=${{ steps.vars.outputs.CC }} \
           LOCALVERSION= \
+          O=build \
           scripts/package/builddeb "$(pwd)"
-          echo "here deb"
-          find . -name "*.deb"
-          echo "../ deb"
-          find ../ -name "*.deb"
+          find build
 
           # for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
           #   [ -e "$f" ] || continue
