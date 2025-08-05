@@ -101,7 +101,7 @@ jobs:
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ github.ref }}
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}
           restore-keys: |
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
 
