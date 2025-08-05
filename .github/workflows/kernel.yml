@@ -142,7 +142,7 @@ jobs:
             CROSS_COMPILE=${{ steps.vars.outputs.CROSS_COMPILE }} \
             CC=${{ steps.vars.outputs.CC }} \
             LOCALVERSION= \
-            -j"$(nproc)" bindeb-pkg
+            -j"$(nproc)" deb-pkg
 
           # for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
           #   [ -e "$f" ] || continue
