@@ -154,7 +154,10 @@ jobs:
           CC=${{ steps.vars.outputs.CC }} \
           LOCALVERSION= \
           scripts/package/builddeb "$(pwd)"
-          ls -al ../*deb
+          echo "here deb"
+          find . -name "*.deb"
+          echo "../ deb"
+          find ../ -name "*.deb"
 
           # for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
           #   [ -e "$f" ] || continue
