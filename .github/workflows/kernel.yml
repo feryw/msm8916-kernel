@@ -129,10 +129,8 @@ jobs:
         run: |
           export USE_CCACHE=1
           export PATH="/usr/lib/ccache:$PATH"
-          export KBUILD_DEBARCH=amd64
-          export DEB_BUILD_ARCH=amd64
-          export DEB_CROSS=yes
-          export DEB_HOST_ARCH=${{ steps.vars.outputs.DISTRO_ARCH }}
+          export KBUILD_BUILD_HOST=amd64
+          export KDEB_ARCH=${{ steps.vars.outputs.DISTRO_ARCH }}
           
           make LOCALVERSION= mrproper
           make ARCH=${{ steps.vars.outputs.ARCH }} \
@@ -146,10 +144,10 @@ jobs:
             LOCALVERSION= \
             -j"$(nproc)" bindeb-pkg
 
-          for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
-            [ -e "$f" ] || continue
-            mv "$f" "${f/_amd64./_armhf.}"
-          done
+          # for f in ../*amd64.deb ../*amd64.changes ../*amd64.buildinfo; do
+          #   [ -e "$f" ] || continue
+          #   mv "$f" "${f/_amd64./_armhf.}"
+          # done
   
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
