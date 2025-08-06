@@ -1,8 +1,8 @@
 name: Kernel ARMv7 Native Build
 
 on:
-  push:
-    branches: [main]
+  repository_dispatch:
+  workflow_dispatch:
 
 jobs:
   build-kernel:
