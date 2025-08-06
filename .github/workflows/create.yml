@@ -26,12 +26,12 @@ jobs:
               apt update &&
               apt install -y build-essential bc kmod cpio flex bison \
                 libncurses-dev libelf-dev libssl-dev dwarves fakeroot \
-                rsync xz-utils ccache lzop liblz4-tool gcc-aarch64-linux-gnu \
-                gcc-9-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf
-              update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
-              update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
-              make ARCH=arm uz801v3_defconfig &&
-              make -j$(nproc) ARCH=arm bindeb-pkg
+                rsync xz-utils ccache lzop liblz4-tool gcc gcc-9 
+              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
+              update-alternatives --set gcc /usr/bin/gcc-9
+              make LOCALVERSION= mrproper
+              make ARCH=arm LOCALVERSION= uz801v3_defconfig &&
+              make -j$(nproc) ARCH=arm LOCALVERSION= bindeb-pkg
             "
 
       - name: List kernel DEBs
