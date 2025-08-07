@@ -83,13 +83,13 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
-            update-alternatives --set gcc /usr/bin/gcc-9
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
+            sudo update-alternatives --set gcc /usr/bin/gcc-9
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
-            update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
+            sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
             export KBUILD_DEBARCH=armhf
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
