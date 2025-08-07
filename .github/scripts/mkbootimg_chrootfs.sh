@@ -13,7 +13,7 @@ fi
 
 DOWNLOAD_SERVER="images.linuxcontainers.org"
 DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
-DOWNLOAD_DISTRO="debian;bullseye;${DISTRO_ARCH};default"
+DOWNLOAD_DISTRO="ubuntu;jammy;${DISTRO_ARCH};default"
 
 DTB_FILE="msm8916-yiming-uz801v3.dtb"
 RAMDISK_FILE="initrd.img"
