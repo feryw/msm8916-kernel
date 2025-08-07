@@ -29,7 +29,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libc6-dev make bzip2 libdpkg-perl patch perl xz-utils \
             gnupg fakeroot gcc gcc-9 gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf autoconf automake bison flex \
             libtool libssl-dev libssl-dev:armhf libelf-dev debhelper bc rsync kmod cpio wget patchutils \
-            lzop liblz4-tool git lsb-release ccache
+            lzop liblz4-tool git lsb-release ccache build-essential
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
             
