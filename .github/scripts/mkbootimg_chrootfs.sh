@@ -6,13 +6,9 @@ ARCH="$1"
 if [ "$ARCH" == "armv8" ]; then
   DISTRO_ARCH="arm64"
   DTB_DIR="usr/lib/linux-image*/qcom"
-  CROSS_COMPILE="aarch64-linux-gnu-"
-  KERNEL_ARCH="arm64"
 else
   DISTRO_ARCH="armhf"
   DTB_DIR="usr/lib"
-  CROSS_COMPILE="arm-linux-gnueabihf-"
-  KERNEL_ARCH="arm"
 fi
 
 DOWNLOAD_SERVER="images.linuxcontainers.org"
@@ -22,13 +18,15 @@ DOWNLOAD_DISTRO="debian;bullseye;${DISTRO_ARCH};default"
 DTB_FILE="msm8916-yiming-uz801v3.dtb"
 RAMDISK_FILE="initrd.img"
 ROOTFS_DIR="rootfs-$DISTRO_ARCH"
+ARTIFACTS_DIR="../../artifacts"
+DEB_IMAGE=$(realpath $ARTIFACTS_DIR/linux-image-*.deb)
+PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
 
 mkdir -p "$ROOTFS_DIR"
 
-# Fetch rootfs tarball URL
+# Fetch & extract rootfs tarball URL
 echo "==> Downloading rootfs metadata..."
 ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
-
 echo "==> Downloading rootfs from $ROOTFS_URL"
 curl -L -o rootfs.tar.xz "$ROOTFS_URL"
 tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
@@ -39,7 +37,6 @@ cat <<EOF | tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
 #!/bin/bash
 set -e
 export DEBIAN_FRONTEND=noninteractive
-PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
 
 cat <<EOI > /etc/fstab
 PARTUUID=$PARTUUID / ext4 defaults,noatime,commit=600,errors=remount-ro 0 1
@@ -50,22 +47,25 @@ rm /etc/resolv.conf
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 apt-get update
-apt-get install -y initramfs-tools
-dpkg -i /tmp/*.deb
+apt-get install -y apt-utils
+apt-get install -y wireless-regdb initramfs-tools
+dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
 
 EOF
 
 chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
 cp ../../artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
+echo 'cp "$DEB_IMAGE" "$ROOTFS_DIR/tmp/"'
+cp "$DEB_IMAGE" "$ROOTFS_DIR/tmp/"
 
 # Bind mounts
-echo "==> Entering chroot to build kernel and install..."
-mount --bind /proc "$ROOTFS_DIR/proc"
-mount --bind /dev "$ROOTFS_DIR/dev"
-mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
-mount --bind /sys "$ROOTFS_DIR/sys"
+echo "==> Entering chroot to make initramfs"
+sudo mount --bind /proc "$ROOTFS_DIR/proc"
+sudo mount --bind /dev "$ROOTFS_DIR/dev"
+sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
+sudo mount --bind /sys "$ROOTFS_DIR/sys"
 
-LANG=C LANGUAGE=C LC_ALL=C chroot "$ROOTFS_DIR" /tmp/chroot.sh
+LANG=C LANGUAGE=C LC_ALL=C sudo chroot "$ROOTFS_DIR" /tmp/chroot.sh
 
 # Unmount
 sudo umount "$ROOTFS_DIR/proc"
@@ -92,7 +92,9 @@ mkbootimg \
     --pagesize 2048 \
     --second_offset 0x00f00000 \
     --ramdisk "$RAMDISK_FILE" \
-    --cmdline "earlycon root=PARTUUID=a7ab80e8-e9d1-e8cd-f157-93f69b1d141e console=ttyMSM0,115200" \
+    --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
     --kernel kernel-dtb -o boot.img
 
-mv boot.img ../../artifacts/
+mkdir -p "$ARTIFACTS_DIR"
+mv boot.img "$ARTIFACTS_DIR/boot-$ARCH.img"
+echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-$ARCH.img"
