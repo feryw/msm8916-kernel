@@ -30,7 +30,7 @@ jobs:
             gnupg fakeroot gcc gcc-9 gcc-10 gcc-12 gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
             gcc-10-arm-linux-gnueabihf gcc-12-arm-linux-gnueabihf autoconf automake bison flex libtool libssl-dev \
             libssl-dev:armhf libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool git lsb-release \
-            ccache build-essential
+            ccache build-essential qemu-user-static mkbootimg
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
             
@@ -132,6 +132,7 @@ jobs:
           echo "==> Downloading rootfs from $ROOTFS_URL"
           curl -L -o rootfs.tar.xz "$ROOTFS_URL"
           tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
+          chmod 1777 "$ROOTFS_DIR/tmp
           rm rootfs.tar.xz
 
           # Setup chroot script
