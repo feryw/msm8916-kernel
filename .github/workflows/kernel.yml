@@ -133,6 +133,7 @@ jobs:
           cp artifacts/mkbootimg_chrootfs.sh ./
           rm artifacts/mkbootimg_chrootfs.sh
           chmod +x mkbootimg_chrootfs.sh
+          ls -alh
           sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
 
       - name: Generate release tag
