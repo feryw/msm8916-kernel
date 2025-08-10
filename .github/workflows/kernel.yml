@@ -103,7 +103,7 @@ jobs:
           fi
           
       - name: Prepare artifacts
-        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
+        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/ && cp scripts/mkbootimg_chrootfs.sh artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -120,11 +120,13 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install qemu-user-static mkbootimg binfmt-support
-          mkdir artifacts
-
-      - name: Checkout
-        uses: actions/checkout@v4
+          sudo apt-get -y install qemu-user-static mkbootimg
+          if [ -d "artifacts" ]; then
+            echo "The artifact directory exists."
+          else
+            echo "Create artifacts dir exist."
+            mkdir -p artifacts
+          fi
 
       - name: Download kernel
         uses: actions/download-artifact@v4
@@ -134,8 +136,7 @@ jobs:
 
       - name: Build
         run: |
-          cd .github/scripts
-          chmod +x ./mkbootimg_chrootfs.sh
+          chmod +x mkbootimg_chrootfs.sh
           sudo ./mkbootimg_chrootfs.sh ${{ inputs.arch }}
 
       - name: Generate release tag
