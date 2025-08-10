@@ -103,32 +103,9 @@ jobs:
           fi
           
       - name: Prepare artifacts
-        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/ && cp .github/scripts/mkbootimg_chrootfs.sh artifacts/ && ls -alh artifacts/
+        run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel
-          path: artifacts/*
-
-  bootimg:
-    name: Make boot images
-    needs: build
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Prepare
-        run: |
-          sudo apt-get -y update
-          sudo apt-get -y install qemu-user-static mkbootimg
-
-      - name: Download kernel
-        uses: actions/download-artifact@v4
-        with:
-          name: kernel
-          path: artifacts
-
-      - name: Build
+      - name: Make boot image
         run: |
           if [ "${{ inputs.arch }}" = "armv8" ]; then
             DISTRO_ARCH="arm64"
@@ -216,7 +193,7 @@ jobs:
           --kernel kernel-dtb -o boot.img
 
           mv boot.img artifacts/boot-${{ inputs.arch }}.img
-          echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-$ARCH.img"
+          echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-${{ inputs.arch }}.img"
 
       - name: Generate release tag
         id: version
