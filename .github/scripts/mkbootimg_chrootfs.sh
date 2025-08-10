@@ -18,7 +18,7 @@ DOWNLOAD_DISTRO="ubuntu;jammy;${DISTRO_ARCH};default"
 DTB_FILE="msm8916-yiming-uz801v3.dtb"
 RAMDISK_FILE="initrd.img"
 ROOTFS_DIR="rootfs-$DISTRO_ARCH"
-ARTIFACTS_DIR="../../artifacts"
+ARTIFACTS_DIR="artifacts"
 DEB_IMAGE=$(realpath $ARTIFACTS_DIR/linux-image-*.deb)
 PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
 
@@ -54,7 +54,7 @@ dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
 EOF
 
 chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
-cp ../../artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
+cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
 echo 'cp "$DEB_IMAGE" "$ROOTFS_DIR/tmp/"'
 cp "$DEB_IMAGE" "$ROOTFS_DIR/tmp/"
 
