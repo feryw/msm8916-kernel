@@ -237,5 +237,4 @@ jobs:
         with:
           name: ${{ steps.version.outputs.NAME }}
           tag_name: ${{ steps.version.outputs.TAG_NAME }}
-          body_path: changes.txt
           files: artifacts/*
