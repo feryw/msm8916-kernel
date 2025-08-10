@@ -195,11 +195,9 @@ jobs:
           sudo umount "$ROOTFS_DIR/dev"
           sudo umount "$ROOTFS_DIR/sys"
 
-          # Extract boot artifacts
           KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
           DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
-
           cp "$KERNEL_IMG" Image.gz
           cp "$INITRD_IMG" initrd.img
           cp "$DTB_PATH" "$DTB_FILE"
@@ -217,7 +215,7 @@ jobs:
           --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
           --kernel kernel-dtb -o boot.img
 
-          mv boot.img "$ARTIFACTS_DIR/boot-$ARCH.img"
+          mv boot.img artifacts/boot-${{ inputs.arch }}.img
           echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-$ARCH.img"
 
       - name: Generate release tag
