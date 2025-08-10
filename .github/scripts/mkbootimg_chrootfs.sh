@@ -18,12 +18,14 @@ DOWNLOAD_DISTRO="ubuntu;jammy;${DISTRO_ARCH};default"
 DTB_FILE="msm8916-yiming-uz801v3.dtb"
 RAMDISK_FILE="initrd.img"
 ROOTFS_DIR="rootfs-$DISTRO_ARCH"
-ARTIFACTS_DIR="artifacts"
+ARTIFACTS_DIR="./artifacts"
 PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
 
-echo "DEB_IMAGE: $DEB_IMAGE"
+pwd
+find "$ARTIFACTS_DIR"
 
 mkdir -p "$ROOTFS_DIR"
+
 
 # Fetch & extract rootfs tarball URL
 echo "==> Downloading rootfs metadata..."
@@ -51,7 +53,6 @@ apt-get update
 apt-get install -y apt-utils
 apt-get install -y wireless-regdb initramfs-tools
 dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
-
 EOF
 
 chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
