@@ -206,6 +206,7 @@ jobs:
           TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
           
           gh release delete "$TAG_NAME" --repo "$REPO" --yes || true
+          gh api --method DELETE "repos/$REPO/git/refs/tags/$TAG_NAME" || true
           gh release create "$TAG_NAME" --repo "$REPO"
           echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
