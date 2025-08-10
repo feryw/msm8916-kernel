@@ -95,6 +95,5 @@ mkbootimg \
     --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
     --kernel kernel-dtb -o boot.img
 
-mkdir -p "$ARTIFACTS_DIR"
 mv boot.img "$ARTIFACTS_DIR/boot-$ARCH.img"
 echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-$ARCH.img"
