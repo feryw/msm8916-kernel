@@ -27,9 +27,10 @@ jobs:
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libc6-dev make bzip2 libdpkg-perl patch perl xz-utils \
-            gnupg fakeroot gcc gcc-10 gcc-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf autoconf automake bison flex \
-            libtool libssl-dev libssl-dev:armhf libelf-dev debhelper bc rsync kmod cpio wget patchutils \
-            lzop liblz4-tool git lsb-release ccache build-essential
+            gnupg fakeroot gcc gcc-9 gcc-10 gcc-12 gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
+            gcc-10-arm-linux-gnueabihf gcc-12-arm-linux-gnueabihf autoconf automake bison flex libtool libssl-dev \
+            libssl-dev:armhf libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool git lsb-release \
+            ccache build-essential
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
             
@@ -83,13 +84,17 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 90
-            sudo update-alternatives --set gcc /usr/bin/gcc-10
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 91
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 92
+            sudo update-alternatives --set gcc /usr/bin/gcc-12
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
             sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 90
-            sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12 90
+            sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg
