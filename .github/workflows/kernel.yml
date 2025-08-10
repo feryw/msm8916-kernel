@@ -84,15 +84,17 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 91
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 92
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 70
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 80
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 90
             sudo update-alternatives --set gcc /usr/bin/gcc-12
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 90
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 90
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 60
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 70
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-11 80
             sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12 90
             sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
