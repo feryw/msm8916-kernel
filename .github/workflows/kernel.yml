@@ -132,7 +132,7 @@ jobs:
           echo "==> Downloading rootfs from $ROOTFS_URL"
           curl -L -o rootfs.tar.xz "$ROOTFS_URL"
           tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
-          chmod 1777 "$ROOTFS_DIR/tmp
+          chmod 1777 "$ROOTFS_DIR/tmp"
           rm rootfs.tar.xz
 
           # Setup chroot script
