@@ -139,6 +139,7 @@ jobs:
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg     
           fi
+          ls -alh ../*deb
           
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
