@@ -85,9 +85,10 @@ jobs:
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ inputs.commit }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ inputs.commit }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
       - name: Build kernel
         run: |
@@ -111,9 +112,9 @@ jobs:
               sudo update-alternatives --set gcc /usr/bin/gcc-13
             else 
               sudo update-alternatives --set gcc /usr/bin/gcc-14
-            fi
-            
+            fi  
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
+            make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc) && \
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
             sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 50
@@ -134,7 +135,9 @@ jobs:
             fi
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg
+            -j$(nproc) bindeb-pkg && \
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+            -j$(nproc) bindeb-pkg     
           fi
           
       - name: Prepare artifacts
@@ -225,16 +228,16 @@ jobs:
         run: |
           REPO="feryw/msm8916-kernel"
           TAG_NAME=$(echo ${{ inputs.commit }}-${{ inputs.gcc }}-${{ inputs.arch }})
-          
-          gh release delete "$TAG_NAME" --repo "$REPO" --yes || true
-          gh api --method DELETE "repos/$REPO/git/refs/tags/$TAG_NAME" || true
-          # gh release create "$TAG_NAME" --repo "$REPO"
-          echo "NAME=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+          if gh release view "$TAG_NAME" --repo "$REPO" > /dev/null 2>&1; then
+            gh release delete "$TAG_NAME" --repo "$REPO" --yes || true
+          fi
+          if gh api "repos/$REPO/git/ref/tags/$TAG_NAME" > /dev/null 2>&1; then
+            gh api --method DELETE "repos/$REPO/git/refs/tags/$TAG_NAME" || true
+          fi
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Releases
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ steps.version.outputs.NAME }}
           tag_name: ${{ steps.version.outputs.TAG_NAME }}
           files: artifacts/*
