@@ -32,8 +32,14 @@ jobs:
     name: Build kernel
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Install dependencies
+      - name: Prepare & Install dependencies
+        id: stripver
         run: |
+          TAG="${{ inputs.commit }}"
+          VERSION="${TAG#v}"
+          VER="${VERSION%-*}"
+          echo "VER=$VER" >> "$GITHUB_OUTPUT"
+
           sudo dpkg --add-architecture armhf
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
@@ -135,11 +141,15 @@ jobs:
             fi
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg && \
+            -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* \
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg     
           fi
-          ls -alh ../*deb
+          mkdir -p artifacts
+          if ! find .. -maxdepth 1 -name "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec mv {} artifacts/ \; ;then
+            echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
+            exit 1
+          fi
           
       - name: Prepare artifacts
         run: mkdir artifacts && mv ../linux-*$(ls ../linux-image-* | cut -d'_' -f1|cut -d'-' -f3)* artifacts/
@@ -223,7 +233,7 @@ jobs:
           mv boot.img artifacts/boot-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img
   
       - name: Generate release tag
-        id: version
+        id: tagver
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -240,5 +250,5 @@ jobs:
       - name: Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.TAG_NAME }}
+          tag_name: ${{ steps.tagver.outputs.TAG_NAME }}
           files: artifacts/*
