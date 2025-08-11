@@ -15,11 +15,23 @@ on:
         options:
           - armv8
           - armv7
+      gcc:
+        description: "GCC Version"
+        required: true
+        default: '14'
+        type: choice
+        options:
+          - "9"
+          - "10"
+          - "11"
+          - "12"
+          - "13"
+          - "14"
       
 jobs:
   build:
     name: Build kernel
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Install dependencies
         run: |
@@ -27,10 +39,10 @@ jobs:
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libc6-dev make bzip2 libdpkg-perl patch perl xz-utils \
-            gnupg fakeroot gcc gcc-9 gcc-10 gcc-12 gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
-            gcc-10-arm-linux-gnueabihf gcc-12-arm-linux-gnueabihf autoconf automake bison flex libtool libssl-dev \
-            libssl-dev:armhf libelf-dev debhelper bc rsync kmod cpio wget patchutils lzop liblz4-tool git lsb-release \
-            ccache build-essential qemu-user-static mkbootimg
+            gnupg fakeroot gcc gcc-9 gcc-10 gcc-11 gcc-12 gcc-14 gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf \
+            gcc-10-arm-linux-gnueabihf gcc-11-arm-linux-gnueabihf gcc-12-arm-linux-gnueabihf gcc-14-arm-linux-gnueabihf \
+            autoconf automake bison flex libtool libssl-dev libssl-dev:armhf libelf-dev debhelper bc rsync kmod cpio \
+            wget patchutils lzop liblz4-tool git lsb-release ccache build-essential qemu-user-static mkbootimg
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
             
@@ -84,19 +96,48 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 70
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 80
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 90
-            sudo update-alternatives --set gcc /usr/bin/gcc-12
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 40
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 50
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 60
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 70
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 80
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 90
+            if [ "${{ inputs.gcc }}" = "9" ]; then
+              sudo update-alternatives --set gcc /usr/bin/gcc-9
+            elif [ "${{ inputs.gcc }}" = "10" ]; then
+              sudo update-alternatives --set gcc /usr/bin/gcc-10
+            elif [ "${{ inputs.gcc }}" = "11" ]; then
+              sudo update-alternatives --set gcc /usr/bin/gcc-11
+            elif [ "${{ inputs.gcc }}" = "12" ]; then
+              sudo update-alternatives --set gcc /usr/bin/gcc-12
+            elif [ "${{ inputs.gcc }}" = "13" ]; then
+              sudo update-alternatives --set gcc /usr/bin/gcc-13
+            else 
+              sudo update-alternatives --set gcc /usr/bin/gcc-14
+            fi
+            
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 60
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 70
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-11 80
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12 90
-            sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 40
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 50
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-11 60
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12 70
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-13 80
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-14 90
+            if [ "${{ inputs.gcc }}" = "9" ]; then
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
+            elif [ "${{ inputs.gcc }}" = "10" ]; then
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
+            elif [ "${{ inputs.gcc }}" = "11" ]; then
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-11
+            elif [ "${{ inputs.gcc }}" = "12" ]; then
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12
+            elif [ "${{ inputs.gcc }}" = "13" ]; then
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-13
+            else
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-14
+            fi
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg
