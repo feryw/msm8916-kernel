@@ -18,15 +18,15 @@ on:
       gcc:
         description: "GCC Version"
         required: true
-        default: '14'
+        default: 'gcc14'
         type: choice
         options:
-          - "9"
-          - "10"
-          - "11"
-          - "12"
-          - "13"
-          - "14"
+          - gcc9
+          - gcc10
+          - gcc11
+          - gcc12
+          - gcc13
+          - gcc14
       
 jobs:
   build:
@@ -102,15 +102,15 @@ jobs:
             sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 70
             sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 80
             sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 90
-            if [ "${{ inputs.gcc }}" = "9" ]; then
+            if [ "${{ inputs.gcc }}" = "gcc9" ]; then
               sudo update-alternatives --set gcc /usr/bin/gcc-9
-            elif [ "${{ inputs.gcc }}" = "10" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
               sudo update-alternatives --set gcc /usr/bin/gcc-10
-            elif [ "${{ inputs.gcc }}" = "11" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc11" ]; then
               sudo update-alternatives --set gcc /usr/bin/gcc-11
-            elif [ "${{ inputs.gcc }}" = "12" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
               sudo update-alternatives --set gcc /usr/bin/gcc-12
-            elif [ "${{ inputs.gcc }}" = "13" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc13" ]; then
               sudo update-alternatives --set gcc /usr/bin/gcc-13
             else 
               sudo update-alternatives --set gcc /usr/bin/gcc-14
@@ -125,15 +125,15 @@ jobs:
             sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12 70
             sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-13 80
             sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-14 90
-            if [ "${{ inputs.gcc }}" = "9" ]; then
+            if [ "${{ inputs.gcc }}" = "gcc9" ]; then
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
-            elif [ "${{ inputs.gcc }}" = "10" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
-            elif [ "${{ inputs.gcc }}" = "11" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc11" ]; then
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-11
-            elif [ "${{ inputs.gcc }}" = "12" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12
-            elif [ "${{ inputs.gcc }}" = "13" ]; then
+            elif [ "${{ inputs.gcc }}" = "gcc13" ]; then
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-13
             else
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-14
@@ -148,12 +148,12 @@ jobs:
 
       - name: Make boot image
         run: |
-          if [ "${{ inputs.arch }}" = "armv8" ]; then
-            DISTRO_ARCH="arm64"
-            DTB_DIR="usr/lib/linux-image*/qcom"
-          else
+          if [ "${{ inputs.arch }}" = "armv7" ]; then
             DISTRO_ARCH="armhf"
             DTB_DIR="usr/lib"
+          else
+            DISTRO_ARCH="arm64"
+            DTB_DIR="usr/lib/linux-image*/qcom"
           fi
 
           DOWNLOAD_SERVER="images.linuxcontainers.org"
@@ -166,17 +166,12 @@ jobs:
           PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
 
           mkdir -p "$ROOTFS_DIR"
-
-          # Fetch & extract rootfs tarball URL
-          echo "==> Downloading rootfs metadata..."
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
-          echo "==> Downloading rootfs from $ROOTFS_URL"
           curl -L -o rootfs.tar.xz "$ROOTFS_URL"
           tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
           chmod 1777 "$ROOTFS_DIR/tmp"
           rm rootfs.tar.xz
 
-          # Setup chroot script
           cat <<EOF | tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
           #!/bin/bash
           set -e
@@ -199,16 +194,11 @@ jobs:
           chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
           cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
 
-          # Bind mounts
-          echo "==> Entering chroot to make initramfs"
           sudo mount --bind /proc "$ROOTFS_DIR/proc"
           sudo mount --bind /dev "$ROOTFS_DIR/dev"
           sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
           sudo mount --bind /sys "$ROOTFS_DIR/sys"
-
           LANG=C LANGUAGE=C LC_ALL=C sudo chroot "$ROOTFS_DIR" /tmp/chroot.sh
-
-          # Unmount
           sudo umount "$ROOTFS_DIR/proc"
           sudo umount "$ROOTFS_DIR/dev/pts"
           sudo umount "$ROOTFS_DIR/dev"
@@ -221,7 +211,6 @@ jobs:
           cp "$INITRD_IMG" initrd.img
           cp "$DTB_PATH" "$DTB_FILE"
 
-          echo "==> Building boot.img..."
           cat Image.gz $DTB_FILE > kernel-dtb
           mkbootimg \
           --base 0x80000000 \
@@ -233,18 +222,15 @@ jobs:
           --ramdisk "$RAMDISK_FILE" \
           --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
           --kernel kernel-dtb -o boot.img
-
-          mv boot.img artifacts/boot-${{ inputs.arch }}.img
-          echo "==> Done. Boot image saved at $ARTIFACTS_DIR/boot-${{ inputs.arch }}.img"
-
+          mv boot.img artifacts/boot-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img
+  
       - name: Generate release tag
         id: version
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NAME=$(ls artifacts/linux-image-* | cut -d'_' -f1|cut -d'-' -f3)
           REPO="feryw/msm8916-kernel"
-          TAG_NAME=$(echo v$NAME-${{ inputs.arch }})
+          TAG_NAME=$(echo ${{ inputs.commit }}-${{ inputs.gcc }}-${{ inputs.arch }})
           
           gh release delete "$TAG_NAME" --repo "$REPO" --yes || true
           gh api --method DELETE "repos/$REPO/git/refs/tags/$TAG_NAME" || true
