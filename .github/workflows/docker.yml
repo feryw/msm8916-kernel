@@ -36,11 +36,6 @@ jobs:
       image: arm64v8/ubuntu:20.04   # Ubuntu 20.04 ARM64 rootfs
       options: --privileged         # required for qemu-user-static + chroot bind mounts
     steps:
-      - name: Set up QEMU for ARM emulation
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm,arm64
-
       - name: Prepare & Install dependencies
         id: stripver
         run: |
