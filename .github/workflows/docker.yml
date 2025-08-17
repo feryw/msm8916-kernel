@@ -31,7 +31,7 @@ on:
 jobs:
   build:
     name: Build kernel
-    runs-on: ubuntu-latest   # host runner is x86_64
+    runs-on: ubuntu-24.04-arm   # host runner is x86_64
     container:
       image: arm64v8/ubuntu:20.04   # Ubuntu 20.04 ARM64 rootfs
       options: --privileged         # required for qemu-user-static + chroot bind mounts
