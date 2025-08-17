@@ -18,19 +18,16 @@ on:
       gcc:
         description: "GCC Version"
         required: true
-        default: 'gcc14'
+        default: 'gcc10'
         type: choice
         options:
           - gcc9
           - gcc10
-          - gcc12
-          - gcc13
-          - gcc14
-      
+          
 jobs:
   build:
     name: Build kernel
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-22.04-arm
     steps:
       - name: Prepare & Install dependencies
         id: stripver
@@ -44,9 +41,8 @@ jobs:
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libc6-dev perl gnupg gcc-9 gcc-10 \
-          gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf gcc-12-arm-linux-gnueabihf \
-          gcc-14-arm-linux-gnueabihf libssl-dev:armhf libelf-dev debhelper patchutils lzop liblz4-tool ccache \
-          build-essential qemu-user-static
+          gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+          libssl-dev:armhf libelf-dev debhelper patchutils lzop liblz4-tool ccache build-essential qemu-user-static
           curl -sSL https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
@@ -102,41 +98,23 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 50
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 60
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 70
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 80
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 90
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 80
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
               sudo update-alternatives --set gcc /usr/bin/gcc-9
-            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
+            else
               sudo update-alternatives --set gcc /usr/bin/gcc-10
-            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
-              sudo update-alternatives --set gcc /usr/bin/gcc-12
-            elif [ "${{ inputs.gcc }}" = "gcc13" ]; then
-              sudo update-alternatives --set gcc /usr/bin/gcc-13
-            else 
-              sudo update-alternatives --set gcc /usr/bin/gcc-14
             fi  
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc) && \
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 50
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 60
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12 70
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-13 80
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-14 90
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 80
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
-            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
-            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-12
-            elif [ "${{ inputs.gcc }}" = "gcc13" ]; then
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-13
             else
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-14
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
             fi
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
