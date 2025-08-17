@@ -37,6 +37,13 @@
 &memshare {
 	/delete-property/ qcom,legacy-client;
 };
+
+&cpu_opp_table {
+	/delete-node/ opp-1094400000;
+	/delete-node/ opp-1152000000;
+	/delete-node/ opp-1209600000;
+};
+
 /delete-node/ &memshare_gps;
 /delete-node/ &gps_mem;
 /delete-node/ &mdss;
