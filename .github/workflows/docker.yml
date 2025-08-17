@@ -1,4 +1,4 @@
-name: Release deb packages kernel 
+name: Release deb packages kernel via docker 
 on:
   repository_dispatch:
   workflow_dispatch:
