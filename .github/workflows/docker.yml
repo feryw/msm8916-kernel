@@ -21,6 +21,10 @@ on:
         default: 'gcc10'
         type: choice
         options:
+          - gcc5
+          - gcc6
+          - gcc7
+          - gcc8
           - gcc9
           - gcc10
           
