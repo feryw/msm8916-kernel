@@ -41,7 +41,7 @@ jobs:
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install libc6-dev perl gnupg gcc-9 gcc-10 \
-          gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+          gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
           libssl-dev:armhf libelf-dev debhelper patchutils lzop liblz4-tool ccache build-essential qemu-user-static
           curl -sSL https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
           sudo timedatectl set-timezone Asia/Jakarta
