@@ -13,7 +13,6 @@ on:
         default: 'armv7'
         type: choice
         options:
-          - armv8
           - armv7
       gcc:
         description: "GCC Version"
@@ -21,13 +20,14 @@ on:
         default: 'gcc7'
         type: choice
         options:
+          - gcc6
           - gcc7
           - gcc8
           
 jobs:
   build:
     name: Build kernel
-    runs-on: ubuntu-22.04  # ✅ use normal x86_64 runner
+    runs-on: ubuntu-24.04  # ✅ use normal x86_64 runner
     steps:
       - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
@@ -44,18 +44,20 @@ jobs:
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
       - name: Build kernel inside aarch64 container
-        uses: uraimo/run-on-arch-action@v2
+        uses: uraimo/run-on-arch-action@v3
         with:
-          arch: aarch64
+          arch: armv7
           distro: ubuntu18.04
           githubToken: ${{ github.token }}
+          setup: |
+            mkdir -p "${PWD}/artifacts"
+          dockerRunArgs: |
+            --volume "${PWD}/artifacts:/artifacts"
           install: |
-            dpkg --add-architecture armhf
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
-              build-essential gcc gcc-7 gcc-8 bc cpio kmod rsync \
-              gcc-arm-linux-gnueabihf gcc-7-arm-linux-gnueabihf gcc-8-arm-linux-gnueabihf \
-              libc6-dev perl gnupg libssl-dev libssl-dev:armhf libelf-dev lsb-release \
+              build-essential gcc-6 gcc-7 gcc-8 bc cpio kmod rsync \
+              libc6-dev perl gnupg libssl-dev libelf-dev lsb-release \
               debhelper patchutils lzop liblz4-tool ccache flex bison texinfo
           run: |
             set -e
@@ -68,30 +70,19 @@ jobs:
             VER="${VERSION%-*}"
 
             make LOCALVERSION= mrproper
-            if [ "${{ inputs.arch }}" = "armv8" ]; then
-              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 80
-              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
-              if [ "${{ inputs.gcc }}" = "gcc7" ]; then
-                update-alternatives --set gcc /usr/bin/gcc-7
-              else
-                update-alternatives --set gcc /usr/bin/gcc-8
-              fi
-              make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
-              make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
+            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 70
+            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 80
+            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
+            if [ "${{ inputs.gcc }}" = "gcc6" ]; then
+              update-alternatives --set gcc /usr/bin/gcc-6
+            elif [ "${{ inputs.gcc }}" = "gcc7" ]; then
+              update-alternatives --set gcc /usr/bin/gcc-7
             else
-              update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7 80
-              update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8 90
-              if [ "${{ inputs.gcc }}" = "gcc7" ]; then
-                update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7
-              else
-                update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8
-              fi
-              make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
-              DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
-                CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= -j$(nproc) bindeb-pkg
+              update-alternatives --set gcc /usr/bin/gcc-8
             fi
-
-            mkdir -p artifacts
+            make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
+            make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
+  
             find .. -maxdepth 1 -name "linux-*${VER}*.deb" -exec mv {} artifacts/ \;
 
       - name: Upload artifacts
