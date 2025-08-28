@@ -21,17 +21,19 @@ jobs:
           docker run --rm --platform linux/arm/v7 \
             -v ${{ github.workspace }}:/kernel \
             -w /kernel \
-            arm32v7/debian:bullseye \
+            arm32v7/debian:buster \
             bash -c "
               apt update &&
-              apt install -y build-essential bc kmod cpio flex bison \
+              apt install -y build-essential bc kmod cpio flex bison lsb-release \
                 libncurses-dev libelf-dev libssl-dev dwarves fakeroot \
-                rsync xz-utils ccache lzop liblz4-tool gcc gcc-9 debhelper
-              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
-              update-alternatives --set gcc /usr/bin/gcc-9
+                rsync xz-utils ccache lzop liblz4-tool gcc-6 gcc-7 gcc-8 debhelper
+              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 70
+              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 80
+              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
+              update-alternatives --set gcc /usr/bin/gcc-7
               make LOCALVERSION= mrproper
-              make ARCH=arm LOCALVERSION= uz801v3_defconfig &&
-              make -j$(nproc) ARCH=arm LOCALVERSION= bindeb-pkg
+              make LOCALVERSION= uz801v3_defconfig &&
+              make -j$(nproc) LOCALVERSION= bindeb-pkg
             "
 
       - name: List kernel DEBs
