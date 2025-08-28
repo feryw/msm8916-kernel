@@ -55,6 +55,7 @@ jobs:
             --platform linux/arm64
             --volume "${PWD}/artifacts:/artifacts"
           install: |
+            hostnamectl set-hostname ryzen5-7600_builder
             dpkg --add-architecture armhf
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
