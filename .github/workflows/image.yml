@@ -6,7 +6,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
-        default: 'v6.12.41-wyref'
+        default: 'v6.12.43-wyref'
       arch:
         description: "Target architecture"
         required: true
