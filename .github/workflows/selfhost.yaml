@@ -56,7 +56,6 @@ jobs:
             --hostname ryzen5-7600builder
             --volume "${GITHUB_WORKSPACE}/artifacts:/artifacts"
             --volume "${GITHUB_WORKSPACE}/.ccache:/ccache"
-            --user $(id -u):$(id -g)
           install: |
             dpkg --add-architecture armhf
             apt-get update
