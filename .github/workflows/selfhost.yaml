@@ -117,13 +117,10 @@ jobs:
             #-j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
             #DEB_BUILD_OPTIONS=compress=gzip make CC='ccache gcc' LOCALVERSION= \
             #-j$(nproc) bindeb-pkg
-  
+
+            chown -R 1001:1001 /ccache
             find .. -maxdepth 1 -name "linux-*${VER}*.deb" -exec mv {} artifacts/ \;
-   
-      - name: Fix permission
-        run: |
-          sudo chown -R $(id -u):$(id -g) "${GITHUB_WORKSPACE}/.ccache"
-      
+        
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
