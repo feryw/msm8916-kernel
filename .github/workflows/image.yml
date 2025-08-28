@@ -53,11 +53,10 @@ jobs:
             dpkg --add-architecture armhf
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
-              build-essential gcc gcc-7 gcc-8 debhelper bc cpio kmod rsync \
+              build-essential gcc gcc-7 gcc-8 bc cpio kmod rsync \
               gcc-arm-linux-gnueabihf gcc-7-arm-linux-gnueabihf gcc-8-arm-linux-gnueabihf \
-              libc6-dev perl gnupg libssl-dev libssl-dev:armhf libelf-dev \
-              debhelper patchutils lzop liblz4-tool ccache \
-              flex bison texinfo
+              libc6-dev perl gnupg libssl-dev libssl-dev:armhf libelf-dev lsb-release \
+              debhelper patchutils lzop liblz4-tool ccache flex bison texinfo
           run: |
             set -e
             export USE_CCACHE=1
