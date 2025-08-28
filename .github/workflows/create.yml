@@ -23,6 +23,8 @@ jobs:
             -w /kernel \
             arm32v7/debian:buster \
             bash -c "
+              sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list
+              sed -i '/security.debian.org/d' /etc/apt/sources.list
               apt update &&
               apt install -y build-essential bc kmod cpio flex bison lsb-release \
                 libncurses-dev libelf-dev libssl-dev dwarves fakeroot \
