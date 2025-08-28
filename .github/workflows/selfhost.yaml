@@ -35,6 +35,10 @@ jobs:
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
 
+      - name: Fix permission
+        run: |
+          sudo chown -R $(id -u):$(id -g) "${GITHUB_WORKSPACE}/.ccache"
+      
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
@@ -51,6 +55,8 @@ jobs:
           githubToken: ${{ github.token }}
           setup: |
             mkdir -p "${GITHUB_WORKSPACE}/artifacts"
+            mkdir -p "${GITHUB_WORKSPACE}/.ccache"
+            sudo chown -R $(id -u):$(id -g) "${GITHUB_WORKSPACE}/.ccache"
           dockerRunArgs: |
             --platform linux/arm64
             --hostname ryzen5-7600builder
@@ -117,7 +123,11 @@ jobs:
             #-j$(nproc) bindeb-pkg
   
             find .. -maxdepth 1 -name "linux-*${VER}*.deb" -exec mv {} artifacts/ \;
-
+   
+      - name: Fix permission
+        run: |
+          sudo chown -R $(id -u):$(id -g) "${GITHUB_WORKSPACE}/.ccache"
+      
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
