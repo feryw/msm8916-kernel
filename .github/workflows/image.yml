@@ -52,6 +52,7 @@ jobs:
           setup: |
             mkdir -p "${PWD}/artifacts"
           dockerRunArgs: |
+            --platform linux/arm64
             --volume "${PWD}/artifacts:/artifacts"
           install: |
             dpkg --add-architecture armhf
