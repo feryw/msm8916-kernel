@@ -34,12 +34,7 @@ jobs:
 
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
-
-      - name: Fix permission
-        run: |
-          mkdir -p "${GITHUB_WORKSPACE}/.ccache"
-          sudo chown -R $(id -u):$(id -g) "${GITHUB_WORKSPACE}/.ccache"
-      
+     
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
