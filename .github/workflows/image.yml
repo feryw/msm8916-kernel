@@ -50,6 +50,7 @@ jobs:
           distro: ubuntu18.04
           githubToken: ${{ github.token }}
           install: |
+            dpkg --add-architecture armhf
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
               build-essential gcc-7 gcc-8 \
