@@ -97,17 +97,21 @@ jobs:
             #  update-alternatives --set gcc /usr/bin/gcc-8
             #fi
             
+            echo 11 | tee scripts/package/debian/compat
+            mkdir -p debian
+            echo 11 | tee debian/compat
+            
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION="" \
+            bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION="" \
+            bindeb-pkg
 
             #make LOCALVERSION= uz801v3_defconfig
             #DEB_BUILD_OPTIONS=compress=gzip make CC='ccache gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
-            DEB_BUILD_OPTIONS=compress=gzip make CC='ccache gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg
+            #-j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
+            #DEB_BUILD_OPTIONS=compress=gzip make CC='ccache gcc' LOCALVERSION= \
+            #-j$(nproc) bindeb-pkg
   
             find .. -maxdepth 1 -name "linux-*${VER}*.deb" -exec mv {} artifacts/ \;
 
