@@ -80,19 +80,19 @@ jobs:
             update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
             
             #if [ "${{ inputs.gcc }}" = "gcc6" ]; then
-              #sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-6
+              #update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-6
             #elif [ "${{ inputs.gcc }}" = "gcc7" ]; then
-              #sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7
+              #update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7
             #else
-              #sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8
+              #update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8
             #fi
 
             if [ "${{ inputs.gcc }}" = "gcc6" ]; then
-              sudo update-alternatives --set gcc /usr/bin/gcc-6
+              update-alternatives --set gcc /usr/bin/gcc-6
             elif [ "${{ inputs.gcc }}" = "gcc7" ]; then
-              sudo update-alternatives --set gcc /usr/bin/gcc-7
+              update-alternatives --set gcc /usr/bin/gcc-7
             else
-              sudo update-alternatives --set gcc /usr/bin/gcc-8
+              update-alternatives --set gcc /usr/bin/gcc-8
             fi
             
             #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
