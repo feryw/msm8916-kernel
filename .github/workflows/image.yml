@@ -56,7 +56,7 @@ jobs:
           install: |
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
-              build-essential bc cpio kmod rsync libc6-dev perl \
+              build-essential bc cpio kmod rsync libc6-dev perl gcc gcc-6 gcc-8 \
               gcc-arm-linux-gnueabihf gcc-6-arm-linux-gnueabihf gcc-8-arm-linux-gnueabihf \
               gnupg libssl-dev libssl-dev libelf-dev lsb-release debhelper \
               patchutils lzop liblz4-tool ccache flex bison texinfo
@@ -72,23 +72,40 @@ jobs:
 
             make LOCALVERSION= mrproper
             
-            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-6 70
-            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7 80
-            update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8 90
+            #update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-6 70
+            #update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7 80
+            #update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8 90
+            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 70
+            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 80
+            update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
             
+            #if [ "${{ inputs.gcc }}" = "gcc6" ]; then
+              #sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-6
+            #elif [ "${{ inputs.gcc }}" = "gcc7" ]; then
+              #sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7
+            #else
+              #sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8
+            #fi
+
             if [ "${{ inputs.gcc }}" = "gcc6" ]; then
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-6
+              sudo update-alternatives --set gcc /usr/bin/gcc-6
             elif [ "${{ inputs.gcc }}" = "gcc7" ]; then
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-7
+              sudo update-alternatives --set gcc /usr/bin/gcc-7
             else
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-8
+              sudo update-alternatives --set gcc /usr/bin/gcc-8
             fi
             
-            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+            #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
+            #DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg     
+            -j$(nproc) bindeb-pkg
+
+            make LOCALVERSION= uz801v3_defconfig
+            DEB_BUILD_OPTIONS=compress=gzip make CC='ccache gcc' LOCALVERSION= \
+            -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
+            DEB_BUILD_OPTIONS=compress=gzip make CC='ccache gcc' LOCALVERSION= \
+            -j$(nproc) bindeb-pkg
   
             find .. -maxdepth 1 -name "linux-*${VER}*.deb" -exec mv {} artifacts/ \;
 
