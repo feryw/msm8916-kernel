@@ -55,6 +55,7 @@ jobs:
             --platform linux/arm64
             --hostname ryzen5-7600builder
             --volume "${PWD}/artifacts:/artifacts"
+            --volume "${GITHUB_WORKSPACE}/.ccache:/ccache"
           install: |
             dpkg --add-architecture armhf
             apt-get update
@@ -65,8 +66,9 @@ jobs:
               gcc-arm-linux-gnueabihf gcc-6-arm-linux-gnueabihf gcc-8-arm-linux-gnueabihf
           run: |
             set -e
+            mkdir -p /cache
             export USE_CCACHE=1
-            export CCACHE_DIR=${GITHUB_WORKSPACE}/.ccache
+            export CCACHE_DIR=/ccache
             export PATH="/usr/lib/ccache:$PATH"
 
             TAG="${{ inputs.commit }}"
