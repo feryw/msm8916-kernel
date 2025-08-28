@@ -51,8 +51,6 @@ jobs:
           githubToken: ${{ github.token }}
           setup: |
             mkdir -p "${GITHUB_WORKSPACE}/artifacts"
-            mkdir -p "${GITHUB_WORKSPACE}/.ccache"
-            sudo chown -R $(id -u):$(id -g) "${GITHUB_WORKSPACE}/.ccache"
           dockerRunArgs: |
             --platform linux/arm64
             --hostname ryzen5-7600builder
@@ -70,7 +68,6 @@ jobs:
             set -e
             export USE_CCACHE=1
             export CCACHE_DIR=/ccache
-            export CCACHE_BASEDIR=${GITHUB_WORKSPACE}
             export PATH="/usr/lib/ccache:$PATH"
 
             TAG="${{ inputs.commit }}"
