@@ -28,8 +28,7 @@ jobs:
               apt update &&
               apt install -y build-essential bc kmod cpio flex bison lsb-release \
                 libncurses-dev libelf-dev libssl-dev dwarves fakeroot \
-                rsync xz-utils ccache lzop liblz4-tool gcc-6 gcc-7 gcc-8 debhelper
-              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 70
+                rsync xz-utils ccache lzop liblz4-tool gcc-7 gcc-8 debhelper
               update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 80
               update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
               update-alternatives --set gcc /usr/bin/gcc-7
