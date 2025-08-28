@@ -19,7 +19,7 @@ Source2: diff.patch
 Provides: kernel-%{KERNELRELEASE}
 BuildRequires: bc binutils bison dwarves
 BuildRequires: (elfutils-libelf-devel or libelf-devel) flex
-BuildRequires: gcc make openssl perl python3 rsync
+BuildRequires: gcc make openssl openssl-devel perl python3 rsync
 
 %description
 The Linux Kernel, the operating system core itself
