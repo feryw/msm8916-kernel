@@ -126,16 +126,12 @@ jobs:
           name: kernel-debs
           path: artifacts/*
 
+  bootimg:
+    name: Generate boot image
+    runs-on: self-hosted
+    steps:
       - name: Make boot image
         run: |
-          if [ "${{ inputs.arch }}" = "armv7" ]; then
-            DISTRO_ARCH="armhf"
-            DTB_DIR="usr/lib"
-          else
-            DISTRO_ARCH="arm64"
-            DTB_DIR="usr/lib/linux-image*/qcom"
-          fi
-
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install apt-utils -y
           DEBIAN_FRONTEND=noninteractive sudo apt-get install qemu-user-static -y
@@ -144,6 +140,14 @@ jobs:
             https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
             tee /tmp/mkbootimg.deb > /dev/null
           DEBIAN_FRONTEND=noninteractive sudo apt install /tmp/mkbootimg.deb
+          
+          if [ "${{ inputs.arch }}" = "armv7" ]; then
+            DISTRO_ARCH="armhf"
+            DTB_DIR="usr/lib"
+          else
+            DISTRO_ARCH="arm64"
+            DTB_DIR="usr/lib/linux-image*/qcom"
+          fi
           
           DOWNLOAD_SERVER="images.linuxcontainers.org"
           DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
