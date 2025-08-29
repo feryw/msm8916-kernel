@@ -33,7 +33,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare repository
-        run: git config --global --add safe.directory "$(pwd)"
+        run: |
+          sudo chown -R 1001:1001 ../
+          git config --global --add safe.directory "$(pwd)"
      
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
