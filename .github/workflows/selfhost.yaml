@@ -29,13 +29,14 @@ jobs:
     name: Build kernel
     runs-on: self-hosted
     steps:
+      - name: Fix permission
+        run: sudo chown -R 1001:1001 ../
+        
       - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
 
       - name: Prepare repository
-        run: |
-          sudo chown -R 1001:1001 ../
-          git config --global --add safe.directory "$(pwd)"
+        run:  git config --global --add safe.directory "$(pwd)"
      
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
