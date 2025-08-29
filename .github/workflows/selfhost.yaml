@@ -100,12 +100,12 @@ jobs:
             #  update-alternatives --set gcc /usr/bin/gcc-8
             #fi
 
-            export DH_COMPAT=11
+            export DH_COMPAT=13
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION="" \
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION="" \
             bindeb-pkg 
             #&& rm -f ../*${{ steps.stripver.outputs.VER }}* && \
-            #DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION="" \
+            #DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION="" \
             #bindeb-pkg
 
             #make LOCALVERSION= uz801v3_defconfig
