@@ -44,7 +44,6 @@ jobs:
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
       - name: Build kernel inside aarch64 container
-        id: stripver
         uses: uraimo/run-on-arch-action@v3
         with:
           arch: aarch64
@@ -75,7 +74,6 @@ jobs:
             TAG="${{ inputs.commit }}"
             VERSION="${TAG#v}"
             VER="${VERSION%-*}"
-            echo "VER=$VER" >> "$GITHUB_OUTPUT"
             
             make LOCALVERSION= mrproper
             
