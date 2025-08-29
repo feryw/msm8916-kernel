@@ -144,7 +144,8 @@ jobs:
           
           curl -sSL \
             https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
-            tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
+            tee /tmp/mkbootimg.deb > /dev/null
+          DEBIAN_FRONTEND=noninteractive sudo apt install /tmp/mkbootimg.deb
           
           DOWNLOAD_SERVER="images.linuxcontainers.org"
           DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
