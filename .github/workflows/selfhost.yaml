@@ -161,7 +161,7 @@ jobs:
           mkdir -p "$ROOTFS_DIR"
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
           curl -L -o rootfs.tar.xz "$ROOTFS_URL"
-          tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
+          tar -xvf rootfs.tar.xz -C "$ROOTFS_DIR"
           chmod 1777 "$ROOTFS_DIR/tmp"
           rm rootfs.tar.xz
 
