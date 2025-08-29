@@ -127,6 +127,9 @@ jobs:
           path: artifacts/*
 
   bootimg:
+    permissions:
+      contents: write
+    needs: build
     name: Generate boot image
     runs-on: self-hosted
     steps:
