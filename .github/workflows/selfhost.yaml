@@ -161,10 +161,13 @@ jobs:
           mkdir -p "$ROOTFS_DIR"
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
           curl -L -o rootfs.tar.xz "$ROOTFS_URL"
+          echo "Extracting rootfs"
           tar -xvf rootfs.tar.xz -C "$ROOTFS_DIR"
+          echo "Change rootfs tmp permission"
           chmod 1777 "$ROOTFS_DIR/tmp"
           rm rootfs.tar.xz
 
+          echo "Create chroot script"
           cat <<EOF | tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
           #!/bin/bash
           set -e
@@ -184,27 +187,36 @@ jobs:
           dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
           EOF
 
+          echo "Fix chroot script permission"
           chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
+          echo "Copying kernel deb to tmp"
           cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
 
+          echo "Prepare chroot env"
           sudo mount --bind /proc "$ROOTFS_DIR/proc"
           sudo mount --bind /dev "$ROOTFS_DIR/dev"
           sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
           sudo mount --bind /sys "$ROOTFS_DIR/sys"
+          echo "Execute chroot script"
           LANG=C LANGUAGE=C LC_ALL=C sudo chroot "$ROOTFS_DIR" /tmp/chroot.sh
           sudo umount "$ROOTFS_DIR/proc"
           sudo umount "$ROOTFS_DIR/dev/pts"
           sudo umount "$ROOTFS_DIR/dev"
           sudo umount "$ROOTFS_DIR/sys"
 
+          echo "Find kernel, initrd, dtb"
           KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
           DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
+          echo "Copying kernel, initrd, dtb from chroot"
           cp "$KERNEL_IMG" Image.gz
           cp "$INITRD_IMG" initrd.img
           cp "$DTB_PATH" "$DTB_FILE"
 
+          echo "generate kernel-dtb"
           cat Image.gz $DTB_FILE > kernel-dtb
+
+          echo "make boot image"
           mkbootimg \
           --base 0x80000000 \
           --kernel_offset 0x00080000 \
@@ -215,7 +227,10 @@ jobs:
           --ramdisk "$RAMDISK_FILE" \
           --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
           --kernel kernel-dtb -o boot.img
+
+          echo "Move boot image to artifact"
           mv boot.img artifacts/boot-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img
+          ls artifacts/
   
       - name: Generate release tag
         id: tagver
