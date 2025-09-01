@@ -21,7 +21,6 @@ on:
         default: 'gcc10'
         type: choice
         options:
-          - gcc8
           - gcc9
           - gcc10
           
@@ -124,7 +123,6 @@ jobs:
             -j$(nproc) bindeb-pkg     
           fi
           mkdir -p artifacts
-          ls -al ../*deb
           if ! find .. -maxdepth 1 -name "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec mv {} artifacts/ \; ;then
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
@@ -192,6 +190,9 @@ jobs:
           KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
           DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
+          echo "Kernel image: $KERNEL_IMG"
+          echo "Init ramdisk: $INITRD_IMG"
+          echo "DTB File: $DTB_PATH"
           cp "$KERNEL_IMG" Image.gz
           cp "$INITRD_IMG" initrd.img
           cp "$DTB_PATH" "$DTB_FILE"
