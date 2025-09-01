@@ -130,13 +130,6 @@ jobs:
             exit 1
           fi
 
-  bootimg:
-    permissions:
-      contents: write
-    needs: build
-    name: Generate boot image
-    runs-on: ubuntu-22.04-arm
-    steps:
       - name: Make boot image
         run: |
           if [ "${{ inputs.arch }}" = "armv7" ]; then
