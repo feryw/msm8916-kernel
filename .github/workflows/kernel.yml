@@ -124,6 +124,7 @@ jobs:
             -j$(nproc) bindeb-pkg     
           fi
           mkdir -p artifacts
+          ls -al ../*deb
           if ! find .. -maxdepth 1 -name "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec mv {} artifacts/ \; ;then
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
