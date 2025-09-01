@@ -118,9 +118,9 @@ jobs:
               sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
             fi
             make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
             -j$(nproc) bindeb-pkg     
           fi
           mkdir -p artifacts
@@ -128,22 +128,30 @@ jobs:
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
-          
+
+  bootimg:
+    permissions:
+      contents: write
+    needs: build
+    name: Generate boot image
+    runs-on: ubuntu-22.04-arm
+    steps:
       - name: Make boot image
         run: |
           if [ "${{ inputs.arch }}" = "armv7" ]; then
             DISTRO_ARCH="armhf"
             DTB_DIR="usr/lib"
+            DTB_FILE="qcom-msm8916-yiming-uz801v3.dtb"
           else
             DISTRO_ARCH="arm64"
             DTB_DIR="usr/lib/linux-image*/qcom"
+            DTB_FILE="msm8916-yiming-uz801v3.dtb"
           fi
 
           DOWNLOAD_SERVER="images.linuxcontainers.org"
           DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
-          DOWNLOAD_DISTRO="ubuntu;bullseye;${DISTRO_ARCH};default"
+          DOWNLOAD_DISTRO="ubuntu;jammy;${DISTRO_ARCH};default"
 
-          DTB_FILE="msm8916-yiming-uz801v3.dtb"
           RAMDISK_FILE="initrd.img"
           ROOTFS_DIR="rootfs-$DISTRO_ARCH"
           PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
