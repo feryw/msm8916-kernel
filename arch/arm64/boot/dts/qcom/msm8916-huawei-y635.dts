@@ -22,12 +22,12 @@
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_keys_default>;
+		pinctrl-names = "default";
 
 		label = "GPIO Buttons";
 
-		volume-up {
+		volume-up-button {
 			label = "Volume Up";
 			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_VOLUMEUP>;
@@ -65,8 +65,8 @@
 		vdd-supply = <&pm8916_l17>;
 		vddio-supply = <&pm8916_l6>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&accel_int_default>;
+		pinctrl-names = "default";
 
 		mount-matrix =	"0", "-1", "0",
 				"-1", "0", "0",
@@ -86,8 +86,8 @@
 		led-max-microamp = <100000>;
 		amstaos,proximity-diodes = <1>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&prox_irq_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -102,8 +102,8 @@
 		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
 
 		reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&ts_int_reset_default>;
+		pinctrl-names = "default";
 
 		vdd-supply = <&pm8916_l16>;
 		vddio-supply = <&pm8916_l6>;
@@ -120,9 +120,9 @@
 };
 
 &dsi0 {
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
 	pinctrl-1 = <&mdss_sleep>;
+	pinctrl-names = "default", "sleep";
 
 	panel@0 {
 		compatible = "huawei,y635-panel";
@@ -157,58 +157,52 @@
 };
 
 &pm8916_bms {
-	status = "okay";
-
 	monitored-battery = <&bat>;
 	power-supplies = <&pm8916_charger>;
+
+	status = "okay";
 };
 
 &pm8916_charger {
-	status = "okay";
-
 	qcom,vdd-safe = <4300000>;
 	qcom,ibat-safe = <700000>;
 
 	monitored-battery = <&bat>;
+
+	status = "okay";
 };
 
 &pm8916_resin {
-	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
 };
 
 &pm8916_vib {
 	status = "okay";
 };
 
-&pronto {
-	status = "okay";
-};
-
 &sdhc_1 {
-	status = "okay";
-
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
 	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
+	pinctrl-names = "default", "sleep";
+
+	status = "okay";
 };
 
 &sdhc_2 {
-	status = "okay";
-
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
+	pinctrl-names = "default", "sleep";
 
 	cd-gpios = <&msmgpio 38 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
 };
 
 &sound {
-	status = "okay";
-
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&cdc_pdm_lines_act>;
 	pinctrl-1 = <&cdc_pdm_lines_sus>;
+	pinctrl-names = "default", "sleep";
 
 	model = "msm8916";
 	audio-routing =
@@ -216,11 +210,15 @@
 		"AMIC2", "MIC BIAS Internal2",
 		"AMIC3", "MIC BIAS External1";
 
+	status = "okay";
+
 	dai-link-primary {
 		link-name = "Primary MI2S";
+
 		cpu {
 			sound-dai = <&lpass MI2S_PRIMARY>;
 		};
+
 		codec {
 			sound-dai = <&lpass_codec 0>, <&wcd_codec 0>;
 		};
@@ -228,9 +226,11 @@
 
 	dai-link-tertiary {
 		link-name = "Tertiary MI2S";
+
 		cpu {
 			sound-dai = <&lpass MI2S_TERTIARY>;
 		};
+
 		codec {
 			sound-dai = <&lpass_codec 1>, <&wcd_codec 1>;
 		};
@@ -238,9 +238,9 @@
 };
 
 &usb {
-	status = "okay";
 	extcon = <&pm8916_charger>;
 	dr_mode = "peripheral";
+	status = "okay";
 };
 
 &usb_hs_phy {
@@ -252,6 +252,14 @@
 	qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
 	qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
 	qcom,hphl-jack-type-normally-open;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -317,8 +325,8 @@
 	l11 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <2950000>;
-		regulator-allow-set-load;
 		regulator-system-load = <200000>;
+		regulator-allow-set-load;
 	};
 
 	l12 {
@@ -358,51 +366,44 @@
 };
 
 &msmgpio {
-	accel_int_default: accel-int-default {
+	accel_int_default: accel-int-default-state {
 		pins = "gpio112";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-up;
 	};
 
-	mdss {
-		mdss_default: mdss-default {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <8>;
-			bias-disable;
-		};
-		mdss_sleep: mdss-sleep {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-pull-down;
-		};
+	mdss_default: mdss-default-state {
+		pins = "gpio25";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
 	};
 
-	prox_irq_default: prox-irq-default {
+	mdss_sleep: mdss-sleep-state {
+		pins = "gpio25";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	prox_irq_default: prox-irq-default-state {
 		pins = "gpio113";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	ts_int_reset_default: ts-int-reset-default {
+	ts_int_reset_default: ts-int-reset-default-state {
 		pins = "gpio12", "gpio13";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};

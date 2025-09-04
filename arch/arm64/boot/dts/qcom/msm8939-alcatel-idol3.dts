@@ -67,14 +67,14 @@
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_keys_volume_up_default>;
+		pinctrl-names = "default";
 
 		label = "GPIO Keys";
 
 		button-volume-up {
 			label = "Volume Up";
-			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
+			gpios = <&tlmm 107 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_VOLUMEUP>;
 		};
 	};
@@ -82,11 +82,11 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_leds_default>;
+		pinctrl-names = "default";
 
 		led-0 {
-			gpios = <&msmgpio 32 GPIO_ACTIVE_HIGH>;
+			gpios = <&tlmm 32 GPIO_ACTIVE_HIGH>;
 			function = LED_FUNCTION_TORCH;
 		};
 	};
@@ -97,10 +97,10 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 		regulator-boot-on;
-		gpio = <&msmgpio 106 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 106 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_enn_default>;
+		pinctrl-names = "default";
 	};
 
 	reg_lcd_enp: regulator-lcd-enp {
@@ -109,17 +109,17 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 		regulator-boot-on;
-		gpio = <&msmgpio 105 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 105 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_enp_default>;
+		pinctrl-names = "default";
 	};
 
 	usb_id: usb-id {
 		compatible = "linux,extcon-usb-gpio";
-		id-gpio = <&msmgpio 69 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
+		id-gpio = <&tlmm 69 GPIO_ACTIVE_HIGH>;
 		pinctrl-0 = <&usb_id_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -131,9 +131,9 @@
 		reg = <0x0c>;
 		vdd-supply = <&pm8916_l17>;
 		vid-supply = <&pm8916_l6>;
-		reset-gpios = <&msmgpio 100 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
+		reset-gpios = <&tlmm 100 GPIO_ACTIVE_LOW>;
 		pinctrl-0 = <&mag_reset_default>;
+		pinctrl-names = "default";
 		mount-matrix = "0", "1", "0",
 			      "-1", "0", "0",
 			       "0", "0", "1";
@@ -142,11 +142,11 @@
 	accelerometer@e {
 		compatible = "kionix,kxtj21009";
 		reg = <0x0e>;
-		interrupts-extended = <&msmgpio 114 IRQ_TYPE_EDGE_FALLING>;
+		interrupts-extended = <&tlmm 114 IRQ_TYPE_EDGE_FALLING>;
 		vdd-supply = <&pm8916_l17>;
 		vddio-supply = <&pm8916_l6>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&accel_int_default>;
+		pinctrl-names = "default";
 		mount-matrix = "-1", "0", "0",
 			       "0", "-1", "0",
 			       "0", "0", "-1";
@@ -155,23 +155,23 @@
 	proximity@39 {
 		compatible = "amstaos,tsl2772";
 		reg = <0x39>;
-		interrupts-extended = <&msmgpio 34 IRQ_TYPE_EDGE_FALLING>;
+		interrupts-extended = <&tlmm 34 IRQ_TYPE_EDGE_FALLING>;
 		vdd-supply = <&pm8916_l17>;
 		vddio-supply = <&pm8916_l6>;
 		amstaos,proximity-diodes = <0>;
 		led-max-microamp = <100000>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&proximity_default>;
+		pinctrl-names = "default";
 	};
 
 	gyroscope@68 {
 		compatible = "bosch,bmg160";
 		reg = <0x68>;
-		interrupts-extended = <&msmgpio 23 IRQ_TYPE_EDGE_RISING>;
+		interrupts-extended = <&tlmm 23 IRQ_TYPE_EDGE_RISING>;
 		vdd-supply = <&pm8916_l17>;
 		vddio-supply = <&pm8916_l6>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&gyro_int_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -182,9 +182,9 @@
 		compatible = "asahi-kasei,ak4375";
 		reg = <0x10>;
 		tvdd-supply = <&pm8916_l6>;
-		pdn-gpios = <&msmgpio 101 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
+		pdn-gpios = <&tlmm 101 GPIO_ACTIVE_HIGH>;
 		pintctrl-0 = <&headphones_pdn_default>;
+		pinctrl-names = "default";
 		#sound-dai-cells = <0>;
 	};
 
@@ -192,10 +192,10 @@
 		compatible = "qcom,smb1360";
 		reg = <0x14>;
 
-		interrupts-extended = <&msmgpio 62 IRQ_TYPE_LEVEL_LOW>;
+		interrupts-extended = <&tlmm 62 IRQ_TYPE_LEVEL_LOW>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&smb_int_default>;
+		pinctrl-names = "default";
 
 		qcom,float-voltage-mv = <4350>;
 		qcom,iterm-ma = <100>;
@@ -233,9 +233,9 @@
 		compatible = "nxp,tfa9897";
 		reg = <0x34>;
 		vddd-supply = <&pm8916_l6>;
-		rcv-gpios = <&msmgpio 91 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
+		rcv-gpios = <&tlmm 91 GPIO_ACTIVE_HIGH>;
 		pinctrl-0 = <&speaker_top_default>;
+		pinctrl-names = "default";
 		sound-name-prefix = "Speaker Top";
 		#sound-dai-cells = <0>;
 	};
@@ -244,9 +244,9 @@
 		compatible = "nxp,tfa9897";
 		reg = <0x36>;
 		vddd-supply = <&pm8916_l6>;
-		rcv-gpios = <&msmgpio 92 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
+		rcv-gpios = <&tlmm 92 GPIO_ACTIVE_HIGH>;
 		pinctrl-0 = <&speaker_bottom_default>;
+		pinctrl-names = "default";
 		sound-name-prefix = "Speaker Bottom";
 		#sound-dai-cells = <0>;
 	};
@@ -254,9 +254,9 @@
 	led-controller@68 {
 		compatible = "si-en,sn3190";
 		reg = <0x68>;
-		shutdown-gpios = <&msmgpio 9 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
+		shutdown-gpios = <&tlmm 9 GPIO_ACTIVE_HIGH>;
 		pinctrl-0 = <&led_enable_default &led_shutdown_default>;
+		pinctrl-names = "default";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -276,11 +276,11 @@
 		status = "disabled";
 		compatible = "syna,rmi4-i2c";
 		reg = <0x20>;
-		interrupts-extended = <&msmgpio 13 IRQ_TYPE_LEVEL_LOW>;
+		interrupts-extended = <&tlmm 13 IRQ_TYPE_LEVEL_LOW>;
 		vdd-supply = <&pm8916_l17>;
 		vio-supply = <&pm8916_l6>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&ts_int_active &ts_reset_active>;
+		pinctrl-names = "default";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -301,12 +301,12 @@
 		status = "disabled";
 		compatible = "edt,edt-ft5406";
 		reg = <0x38>;
-		interrupts-extended = <&msmgpio 13 IRQ_TYPE_LEVEL_LOW>;
+		interrupts-extended = <&tlmm 13 IRQ_TYPE_LEVEL_LOW>;
 		vcc-supply = <&pm8916_l17>;
 		iovcc-supply = <&pm8916_l6>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&ts_int_active &ts_reset_active>;
-		reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default";
+		reset-gpios = <&tlmm 12 GPIO_ACTIVE_LOW>;
 
 		touchscreen-size-x = <1080>;
 		touchscreen-size-y = <1920>;
@@ -314,16 +314,16 @@
 };
 
 &dsi0 {
-	status = "okay";
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
 	pinctrl-1 = <&mdss_sleep>;
+	pinctrl-names = "default", "sleep";
+	status = "okay";
 
 	panel@0 {
 		compatible = "alcatel,idol3-panel";
 		reg = <0>;
 
-		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 25 GPIO_ACTIVE_LOW>;
 		enp-supply = <&reg_lcd_enp>;
 		enn-supply = <&reg_lcd_enn>;
 
@@ -349,8 +349,8 @@
 };
 
 &dsi_phy0 {
-	status = "okay";
 	qcom,dsi-phy-regulator-ldo-mode;
+	status = "okay";
 };
 
 &mdss {
@@ -358,25 +358,18 @@
 };
 
 &pm8916_pwm {
-	status = "okay";
-	pinctrl-names = "default";
 	pinctrl-0 = <&pwm_out>;
+	pinctrl-names = "default";
+	status = "okay";
 };
 
 &pm8916_resin {
-	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
 };
 
 &pm8916_vib {
 	status = "okay";
-};
-
-&pronto {
-	status = "okay";
-	iris {
-		compatible = "qcom,wcn3660b";
-	};
 };
 
 &q6afedai {
@@ -392,24 +385,24 @@
 };
 
 &sdhc_1 {
-	status = "okay";
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
 	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
+	pinctrl-names = "default", "sleep";
+
+	status = "okay";
 };
 
 &sdhc_2 {
-	status = "okay";
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
+	pinctrl-names = "default", "sleep";
 
-	cd-gpios = <&msmgpio 38 GPIO_ACTIVE_LOW>;
+	cd-gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
 };
 
 &sound {
-	status = "okay";
-
 	model = "alcatel-idol3";
 	widgets = "Speaker", "Speaker Top", "Speaker", "Speaker Bottom";
 	pin-switches = "Speaker Top", "Speaker Bottom";
@@ -420,11 +413,13 @@
 		"AMIC2", "MIC BIAS Internal2",
 		"AMIC3", "MIC BIAS External1";
 
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&cdc_pdm_lines_act &ext_mclk_tlmm_lines_act>,
 		    <&ext_pri_tlmm_lines_act &ext_pri_ws_act &ext_sec_tlmm_lines_act>;
 	pinctrl-1 = <&cdc_pdm_lines_sus &ext_mclk_tlmm_lines_sus>,
 		    <&ext_pri_tlmm_lines_sus &ext_pri_ws_sus &ext_sec_tlmm_lines_sus>;
+	pinctrl-names = "default", "sleep";
+
+	status = "okay";
 };
 
 &sound_dai_primary {
@@ -448,9 +443,9 @@
 };
 
 &usb {
-	status = "okay";
 	extcon = <&charger>, <&usb_id>;
 	vbus-supply = <&usb_otg_vbus>;
+	status = "okay";
 };
 
 &usb_hs_phy {
@@ -462,6 +457,14 @@
 	qcom,mbhc-vthreshold-low = <75 100 120 180 500>;
 	qcom,mbhc-vthreshold-high = <75 100 120 180 500>;
 	qcom,hphl-jack-type-normally-open;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3660b";
 };
 
 &smd_rpm_regulators {
@@ -527,8 +530,8 @@
 	l11 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <2950000>;
-		regulator-allow-set-load;
 		regulator-system-load = <200000>;
+		regulator-allow-set-load;
 	};
 
 	l12 {
@@ -581,11 +584,10 @@
 	pins = "gpio113", "gpio115";
 };
 
-&msmgpio {
+&tlmm {
 	accel_int_default: accel-int-default-state {
 		pins = "gpio114";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -593,7 +595,6 @@
 	gpio_keys_volume_up_default: gpio-keys-volume-up-default-state {
 		pins = "gpio107";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-up;
 	};
@@ -659,7 +660,6 @@
 	led_shutdown_default: led-shutdown-default-state {
 		pins = "gpio9";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -667,7 +667,6 @@
 	mag_reset_default: mag-reset-default-state {
 		pins = "gpio100";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -675,7 +674,6 @@
 	proximity_default: proximity-default-state {
 		pins = "gpio34";
 		function = "gpio";
-
 		drive-strength = <6>;
 		bias-pull-up;
 	};
@@ -683,7 +681,6 @@
 	mdss_default: mdss-default-state {
 		pins = "gpio25";
 		function = "gpio";
-
 		drive-strength = <8>;
 		bias-disable;
 	};
@@ -691,7 +688,6 @@
 	mdss_sleep: mdss-sleep-state {
 		pins = "gpio25";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-down;
 	};
@@ -707,7 +703,6 @@
 	speaker_bottom_default: speaker-bottom-default-state {
 		pins = "gpio92";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -715,7 +710,6 @@
 	speaker_top_default: speaker-top-default-state {
 		pins = "gpio91";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -723,7 +717,6 @@
 	ts_int_active: pmx-ts-int-active-state {
 		pins = "gpio13";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-up;
 	};
@@ -731,7 +724,6 @@
 	ts_reset_active: pmx-ts-reset-active-state {
 		pins = "gpio12";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -739,18 +731,17 @@
 	usb_id_default: usb-id-default-state {
 		pins = "gpio69";
 		function = "gpio";
-
 		drive-strength = <8>;
 		bias-pull-up;
 	};
 };
 
 &pm8916_mpps {
-	pwm_out: pm8916_mpp4 {
+	pwm_out: mpp4-state {
 		pins = "mpp4";
 		function = "digital";
-		output-low;
 		power-source = <PM8916_MPP_L5>;
+		output-low;
 		qcom,dtest = <1>;
 	};
 };

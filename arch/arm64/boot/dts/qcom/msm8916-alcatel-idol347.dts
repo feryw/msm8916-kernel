@@ -118,9 +118,6 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&smb_int_default>;
-
-		/* Set by bootloader */
-		status = "disabled";
 		qcom,otp-rslow-config = /bits/ 8 <0x0 0x0 0x0 0x0>;
 
 		qcom,float-voltage-mv = <4350>;
@@ -151,6 +148,9 @@
 		qcom,shdn-after-pwroff;
 		qcom,fg-reset-at-pon;
 		qcom,fg-reset-threshold-mv = <200>;
+
+		/* Set by bootloader */
+		status = "disabled";
 
 		usb_otg_vbus: usb-otg-vbus {
 			regulator-max-microamp = <1500000>;
@@ -310,6 +310,10 @@
 };
 
 &dsi0 {
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&mdss_active>;
+	pinctrl-1 = <&mdss_suspend>;
+
 	panel@0 {
 		compatible = "alcatel,idol347-panel";
 		reg = <0>;
@@ -354,10 +358,6 @@
 };
 
 &pm8916_vib {
-	status = "okay";
-};
-
-&pronto {
 	status = "okay";
 };
 
@@ -449,6 +449,14 @@
 	qcom,mbhc-vthreshold-low = <75 100 120 180 500>;
 	qcom,mbhc-vthreshold-high = <75 100 120 180 500>;
 	qcom,hphl-jack-type-normally-open;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -563,7 +571,7 @@
 };
 
 &msmgpio {
-	accel_int_default: accel-int-default {
+	accel_int_default: accel-int-default-state {
 		pins = "gpio31";
 		function = "gpio";
 
@@ -571,7 +579,7 @@
 		bias-disable;
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107";
 		function = "gpio";
 
@@ -587,7 +595,7 @@
 		bias-disable;
 	};
 
-	gyro_int_default: gyro-int-default {
+	gyro_int_default: gyro-int-default-state {
 		pins = "gpio97", "gpio98";
 		function = "gpio";
 
@@ -595,7 +603,7 @@
 		bias-disable;
 	};
 
-	headphones_avdd_default: headphones-avdd-default {
+	headphones_avdd_default: headphones-avdd-default-state {
 		pins = "gpio121";
 		function = "gpio";
 
@@ -603,7 +611,7 @@
 		bias-disable;
 	};
 
-	headphones_pdn_default: headphones-pdn-default {
+	headphones_pdn_default: headphones-pdn-default-state {
 		pins = "gpio114";
 		function = "gpio";
 
@@ -634,7 +642,7 @@
 		bias-disable;
 	};
 
-	mag_reset_default: mag-reset-default {
+	mag_reset_default: mag-reset-default-state {
 		pins = "gpio8";
 		function = "gpio";
 
@@ -642,24 +650,23 @@
 		bias-disable;
 	};
 
-	mdss {
-		mdss_active: mdss-active {
-			pins = "gpio25";
-			function = "gpio";
+	mdss_active: mdss-active-state {
+		pins = "gpio25";
+		function = "gpio";
 
-			drive-strength = <8>;
-			bias-disable;
-		};
-		mdss_suspend: mdss-suspend {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-pull-down;
-		};
+		drive-strength = <8>;
+		bias-disable;
 	};
 
-	proximity_int_default: proximity-int-default {
+	mdss_suspend: mdss-suspend-state {
+		pins = "gpio25";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	proximity_int_default: proximity-int-default-state {
 		pins = "gpio12";
 		function = "gpio";
 
@@ -667,7 +674,7 @@
 		bias-pull-up;
 	};
 
-	smb_int_default: smb_int_default {
+	smb_int_default: smb-int-default-state {
 		pins = "gpio9";
 		function = "gpio";
 
@@ -675,7 +682,7 @@
 		bias-pull-up;
 	};
 
-	speaker_bottom_default: speaker-bottom-default {
+	speaker_bottom_default: speaker-bottom-default-state {
 		pins = "gpio111";
 		function = "gpio";
 
@@ -683,7 +690,7 @@
 		bias-disable;
 	};
 
-	speaker_top_default: speaker-top-default {
+	speaker_top_default: speaker-top-default-state {
 		pins = "gpio50";
 		function = "gpio";
 
@@ -691,7 +698,7 @@
 		bias-disable;
 	};
 
-	tps65132_en_default: tps65132-en-default {
+	tps65132_en_default: tps65132-en-default-state {
 		pins = "gpio2", "gpio33";
 		function = "gpio";
 
@@ -699,7 +706,7 @@
 		bias-disable;
 	};
 
-	ts_int_reset_default: ts-int-reset-default {
+	ts_int_reset_default: ts-int-reset-default-state {
 		pins = "gpio13", "gpio100";
 		function = "gpio";
 
@@ -707,7 +714,7 @@
 		bias-disable;
 	};
 
-	usb_id_default: usb-id-default {
+	usb_id_default: usb-id-default-state {
 		pins = "gpio69";
 		function = "gpio";
 
@@ -717,12 +724,11 @@
 };
 
 &pm8916_mpps {
-	pwm_out: mpp4 {
+	pwm_out: mpp4-state {
 		pins = "mpp4";
 		function = "digital";
-
+		power-source = <PM8916_MPP_L5>;
 		output-low;
 		qcom,dtest = <1>;
-		power-source = <PM8916_MPP_L5>;
 	};
 };

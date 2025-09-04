@@ -42,7 +42,7 @@
 
 		label = "GPIO Hall Effect Sensor";
 
-		hall-sensor {
+		event-hall-sensor {
 			label = "Hall Effect Sensor";
 			gpios = <&msmgpio 52 GPIO_ACTIVE_LOW>;
 			linux,input-type = <EV_SW>;
@@ -225,10 +225,6 @@
 	linux,code = <KEY_VOLUMEDOWN>;
 };
 
-&pronto {
-	status = "okay";
-};
-
 &sdhc_1 {
 	status = "okay";
 
@@ -248,16 +244,17 @@
 };
 
 &sound {
-	status = "okay";
+	model = "msm8916-1mic";
 	audio-routing =
 		"AMIC1", "MIC BIAS External1",
 		"AMIC2", "MIC BIAS Internal2",
 		"AMIC3", "MIC BIAS External1";
+	status = "okay";
 };
 
 &usb {
-	status = "okay";
 	extcon = <&muic>, <&muic>;
+	status = "okay";
 };
 
 &usb_hs_phy {
@@ -270,8 +267,16 @@
 	qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
 	qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
 
-	pinctrl-names = "default";
 	pinctrl-0 = <&jack_default>;
+	pinctrl-names = "default";
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -378,7 +383,7 @@
 };
 
 &msmgpio {
-	accel_int_default: accel-int-default {
+	accel_int_default: accel-int-default-state {
 		pins = "gpio115";
 		function = "gpio";
 
@@ -386,7 +391,7 @@
 		bias-disable;
 	};
 
-	gpio_hall_sensor_default: gpio-hall-sensor-default {
+	gpio_hall_sensor_default: gpio-hall-sensor-default-state {
 		pins = "gpio52";
 		function = "gpio";
 
@@ -394,7 +399,7 @@
 		bias-disable;
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107", "gpio109";
 		function = "gpio";
 
@@ -402,46 +407,44 @@
 		bias-pull-up;
 	};
 
-	lcd_1p8_ldo_en_default: lcd-1p8-ldo-en-default {
+	lcd_1p8_ldo_en_default: lcd-1p8-ldo-en-default-state {
 		function = "gpio";
 
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	lcd_3p0_ldo_en_default: lcd-3p0-ldo-en-default {
+	lcd_3p0_ldo_en_default: lcd-3p0-ldo-en-default-state {
 		function = "gpio";
 
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	jack_default: jack-default {
+	jack_default: jack-default-state {
 		pins = "gpio110";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	mdss {
-		mdss_default: mdss-default {
-			pins = "gpio25";
-			function = "gpio";
+	mdss_default: mdss-default-state {
+		pins = "gpio25";
+		function = "gpio";
 
-			drive-strength = <8>;
-			bias-disable;
-		};
-		mdss_sleep: mdss-sleep {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-pull-down;
-		};
+		drive-strength = <8>;
+		bias-disable;
 	};
 
-	muic_i2c_default: muic-i2c-default {
+	mdss_sleep: mdss-sleep-state {
+		pins = "gpio25";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	muic_i2c_default: muic-i2c-default-state {
 		pins = "gpio105", "gpio106";
 		function = "gpio";
 
@@ -449,7 +452,7 @@
 		bias-disable;
 	};
 
-	muic_int_default: muic-int-default {
+	muic_int_default: muic-int-default-state {
 		pins = "gpio12";
 		function = "gpio";
 
@@ -457,7 +460,7 @@
 		bias-disable;
 	};
 
-	sensors_i2c_default: sensors-i2c-default {
+	sensors_i2c_default: sensors-i2c-default-state {
 		pins = "gpio31", "gpio32";
 		function = "gpio";
 
@@ -465,7 +468,7 @@
 		bias-disable;
 	};
 
-	tsp_int_default: tsp-int-default {
+	tsp_int_default: tsp-int-default-state {
 		pins = "gpio13";
 		function = "gpio";
 
@@ -473,7 +476,7 @@
 		bias-disable;
 	};
 
-	tsp_ldo_en_default: tsp-ldo-en-default {
+	tsp_ldo_en_default: tsp-ldo-en-default-state {
 		function = "gpio";
 
 		drive-strength = <2>;

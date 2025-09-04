@@ -20,18 +20,18 @@
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_keys_default>;
+		pinctrl-names = "default";
 
 		label = "GPIO Buttons";
 
-		volume-up {
+		volume-up-button {
 			label = "Volume Up";
 			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_VOLUMEUP>;
 		};
 
-		home {
+		home-button {
 			label = "Home";
 			gpios = <&msmgpio 109 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_HOMEPAGE>;
@@ -48,8 +48,8 @@
 		num-interpolated-steps = <255>;
 		default-brightness-level = <128>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&backlight_en_default>;
+		pinctrl-names = "default";
 	};
 
 	clk_pwm: pwm {
@@ -58,8 +58,8 @@
 
 		clocks = <&gcc GCC_GP2_CLK>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&backlight_pwm_default>;
+		pinctrl-names = "default";
 	};
 
 	reg_vdd_lcd: regulator-vdd-lcd {
@@ -71,8 +71,8 @@
 		gpio = <&msmgpio 102 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_on_default>;
+		pinctrl-names = "default";
 	};
 
 	reg_vdd_tsp_a: regulator-vdd-tsp-a {
@@ -84,16 +84,16 @@
 		gpio = <&msmgpio 73 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&tsp_en_default>;
+		pinctrl-names = "default";
 	};
 
 	vibrator {
 		compatible = "gpio-vibrator";
 		enable-gpios = <&msmgpio 72 GPIO_ACTIVE_HIGH>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&motor_en_default>;
+		pinctrl-names = "default";
 	};
 
 	i2c_nfc: i2c-nfc {
@@ -101,8 +101,8 @@
 		sda-gpios = <&msmgpio 0 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
 		scl-gpios = <&msmgpio 1 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&nfc_i2c_default>;
+		pinctrl-names = "default";
 
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -120,8 +120,8 @@
 			enable-gpios = <&msmgpio 20 GPIO_ACTIVE_HIGH>;
 			firmware-gpios = <&msmgpio 49 GPIO_ACTIVE_HIGH>;
 
-			pinctrl-names = "default";
 			pinctrl-0 = <&nfc_default>;
+			pinctrl-names = "default";
 
 			status = "disabled";
 		};
@@ -138,8 +138,8 @@
 
 			clocks = <&rpmcc RPM_SMD_BB_CLK2_PIN>;
 
-			pinctrl-names = "default";
 			pinctrl-0 = <&nfc_default>, <&nfc_clk_req>;
+			pinctrl-names = "default";
 
 			status = "disabled";
 		};
@@ -154,8 +154,8 @@
 		reg = <0x25>;
 		interrupt-parent = <&msmgpio>;
 		interrupts = <12 IRQ_TYPE_EDGE_FALLING>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&muic_int_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -172,8 +172,8 @@
 		vdd-supply = <&pm8916_l5>;
 		vddio-supply = <&pm8916_l5>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&accel_int_default>;
+		pinctrl-names = "default";
 
 		mount-matrix = "0", "-1", "0",
 			      "-1",  "0", "0",
@@ -206,8 +206,8 @@
 		vdd-supply = <&pm8916_l17>;
 		vddio-supply = <&pm8916_l5>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&accel_int_default>;
+		pinctrl-names = "default";
 
 		st,drdy-int-pin = <1>;
 		mount-matrix = "0", "-1",  "0",
@@ -242,8 +242,8 @@
 		interrupt-parent = <&msmgpio>;
 		interrupts = <121 IRQ_TYPE_EDGE_FALLING>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&fg_alert_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -263,8 +263,8 @@
 		vcca-supply = <&reg_vdd_tsp_a>;
 		vdd-supply = <&pm8916_l6>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&tsp_int_default>;
+		pinctrl-names = "default";
 
 		linux,keycodes = <KEY_APPSELECT KEY_BACK>;
 	};
@@ -275,9 +275,9 @@
 };
 
 &dsi0 {
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
 	pinctrl-1 = <&mdss_sleep>;
+	pinctrl-names = "default", "sleep";
 
 	panel: panel@0 {
 		compatible = "samsung,gprime-panel";
@@ -307,43 +307,40 @@
 };
 
 &pm8916_resin {
-	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
-};
-
-&pronto {
 	status = "okay";
 };
 
 &sdhc_1 {
-	status = "okay";
-
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
 	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
+	pinctrl-names = "default", "sleep";
+
+	status = "okay";
 };
 
 &sdhc_2 {
-	status = "okay";
-
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
+	pinctrl-names = "default", "sleep";
 
 	cd-gpios = <&msmgpio 38 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
 };
 
 &sound {
-	status = "okay";
+	model = "msm8916-1mic";
 	audio-routing =
 		"AMIC1", "MIC BIAS External1",
 		"AMIC2", "MIC BIAS Internal2",
 		"AMIC3", "MIC BIAS External1";
+	status = "okay";
 };
 
 &usb {
-	status = "okay";
 	extcon = <&muic>, <&muic>;
+	status = "okay";
 };
 
 &usb_hs_phy {
@@ -356,8 +353,16 @@
 	qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
 	qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
 
-	pinctrl-names = "default";
 	pinctrl-0 = <&jack_default>;
+	pinctrl-names = "default";
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -423,8 +428,8 @@
 	l11 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <2950000>;
-		regulator-allow-set-load;
 		regulator-system-load = <200000>;
+		regulator-allow-set-load;
 	};
 
 	l12 {
@@ -464,140 +469,125 @@
 };
 
 &msmgpio {
-	accel_int_default: accel-int-default {
+	accel_int_default: accel-int-default-state {
 		pins = "gpio115";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	backlight_en_default: backlight-en-default {
+	backlight_en_default: backlight-en-default-state {
 		pins = "gpio98";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	backlight_pwm_default: backlight-pwm-default {
+	backlight_pwm_default: backlight-pwm-default-state {
 		pins = "gpio50";
 		function = "gcc_gp2_clk_a";
 	};
 
-	fg_alert_default: fg-alert-default {
+	fg_alert_default: fg-alert-default-state {
 		pins = "gpio121";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107", "gpio109";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-up;
 	};
 
-	jack_default: jack-default {
+	jack_default: jack-default-state {
 		pins = "gpio110";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	lcd_on_default: lcd-on-default {
+	lcd_on_default: lcd-on-default-state {
 		pins = "gpio102";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	mdss {
-		mdss_default: mdss-default {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <8>;
-			bias-disable;
-		};
-		mdss_sleep: mdss-sleep {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-pull-down;
-		};
+	mdss_default: mdss-default-state {
+		pins = "gpio25";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
 	};
 
-	motor_en_default: motor-en-default {
+	mdss_sleep: mdss-sleep-state {
+		pins = "gpio25";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	motor_en_default: motor-en-default-state {
 		pins = "gpio72";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	muic_int_default: muic-int-default {
+	muic_int_default: muic-int-default-state {
 		pins = "gpio12";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	nfc_default: nfc-default {
-		pins = "gpio20", "gpio49";
-		function = "gpio";
-
-		drive-strength = <2>;
-		bias-disable;
-
-		irq {
+	nfc_default: nfc-default-state {
+		irq-pins {
 			pins = "gpio21";
 			function = "gpio";
-
 			drive-strength = <2>;
 			bias-pull-down;
 		};
+
+		nfc-pins {
+			pins = "gpio20", "gpio49";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
 	};
 
-	nfc_i2c_default: nfc-i2c-default {
+	nfc_i2c_default: nfc-i2c-default-state {
 		pins = "gpio0", "gpio1";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	tsp_en_default: tsp_en_default {
+	tsp_en_default: tsp-en-default-state {
 		pins = "gpio73";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 
-	tsp_int_default: tsp_int_default {
+	tsp_int_default: tsp-int-default-state {
 		pins = "gpio13";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
 };
 
 &pm8916_gpios {
-	nfc_clk_req: nfc-clk-req {
+	nfc_clk_req: nfc-clk-req-state {
 		pins = "gpio2";
 		function = "func1";
-
-		input-enable;
-		bias-disable;
 		power-source = <PM8916_GPIO_L2>;
+		bias-disable;
+		input-enable;
 	};
 };

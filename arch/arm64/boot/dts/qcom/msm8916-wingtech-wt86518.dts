@@ -48,12 +48,12 @@
 };
 
 &pm8916_charger {
-	status = "okay";
-
 	qcom,vdd-safe = <4300000>;
 	qcom,ibat-safe = <900000>;
 
 	monitored-battery = <&battery>;
+
+	status = "okay";
 };
 
 &pm8916_bms {
@@ -100,7 +100,7 @@
 };
 
 &msmgpio {
-	spk_ext_pa_default: spk-ext-pa-default {
+	spk_ext_pa_default: spk-ext-pa-default-state {
 		pins = "gpio119";
 		function = "gpio";
 

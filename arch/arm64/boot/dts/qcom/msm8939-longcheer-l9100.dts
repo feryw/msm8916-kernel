@@ -3,6 +3,8 @@
 /dts-v1/;
 
 #include "msm8939-pm8916.dtsi"
+#include "msm8916-modem.dtsi"
+
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/irq.h>
@@ -22,17 +24,24 @@
 		stdout-path = "serial0";
 	};
 
+	reserved-memory {
+		gps_mem: gps@8cc00000 {
+			reg = <0x0 0x8cc00000 0x0 0x200000>;
+			no-map;
+		};
+	};
+
 	gpio-hall-sensor {
 		compatible = "gpio-keys";
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_hall_sensor_default>;
+		pinctrl-names = "default";
 
 		label = "GPIO Hall Effect Sensor";
 
 		event-hall-sensor {
 			label = "Hall Effect Sensor";
-			gpios = <&msmgpio 20 GPIO_ACTIVE_LOW>;
+			gpios = <&tlmm 20 GPIO_ACTIVE_LOW>;
 			linux,input-type = <EV_SW>;
 			linux,code = <SW_LID>;
 			linux,can-disable;
@@ -42,14 +51,14 @@
 	gpio-keys {
 		compatible = "gpio-keys";
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_keys_default>;
+		pinctrl-names = "default";
 
 		label = "GPIO Buttons";
 
 		button-volume-up {
 			label = "Volume Up";
-			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
+			gpios = <&tlmm 107 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_VOLUMEUP>;
 		};
 	};
@@ -58,13 +67,13 @@
 		compatible = "gpio-leds";
 
 		led-0 {
-			gpios = <&msmgpio 17 GPIO_ACTIVE_HIGH>;
+			gpios = <&tlmm 17 GPIO_ACTIVE_HIGH>;
 			color = <LED_COLOR_ID_WHITE>;
 			default-state = "off";
 			function = LED_FUNCTION_KBD_BACKLIGHT;
 
-			pinctrl-names = "default";
 			pinctrl-0 = <&button_backlight_default>;
+			pinctrl-names = "default";
 		};
 	};
 
@@ -74,11 +83,11 @@
 		regulator-min-microvolt = <2850000>;
 		regulator-max-microvolt = <2850000>;
 
-		gpio = <&msmgpio 78 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 78 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&ts_vdd_default>;
+		pinctrl-names = "default";
 	};
 
 	backlight: backlight {
@@ -87,19 +96,19 @@
 		brightness-levels = <0 255>;
 		num-interpolated-steps = <255>;
 		default-brightness-level = <128>;
-		enable-gpios = <&msmgpio 98 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&tlmm 98 GPIO_ACTIVE_HIGH>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_bl_en_default>;
+		pinctrl-names = "default";
 	};
 
 	flash-led-controller {
 		compatible = "ocs,ocp8110";
-		flash-gpios = <&msmgpio 8 GPIO_ACTIVE_HIGH>;
-		enable-gpios = <&msmgpio 49 GPIO_ACTIVE_HIGH>;
+		flash-gpios = <&tlmm 8 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&tlmm 49 GPIO_ACTIVE_HIGH>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&camera_front_flash_default>;
+		pinctrl-names = "default";
 
 		flash_led: led {
 			function = LED_FUNCTION_FLASH;
@@ -110,9 +119,9 @@
 
 	usb_id: usb-id {
 		compatible = "linux,extcon-usb-gpio";
-		id-gpio = <&msmgpio 110 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
+		id-gpio = <&tlmm 110 GPIO_ACTIVE_HIGH>;
 		pinctrl-0 = <&usb_id_default &usb_id_switch_default>;
+		pinctrl-names = "default";
 	};
 
 };
@@ -127,10 +136,10 @@
 		vdd-supply = <&pm8916_l17>;
 		vid-supply = <&pm8916_l6>;
 
-		reset-gpios = <&msmgpio 68 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&tlmm 68 GPIO_ACTIVE_HIGH>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&mag_reset_default>;
+		pinctrl-names = "default";
 	};
 
 	light-sensor@23 {
@@ -140,11 +149,11 @@
 		vdd-supply = <&pm8916_l17>;
 		vddio-supply = <&pm8916_l5>;
 
-		interrupt-parent = <&msmgpio>;
+		interrupt-parent = <&tlmm>;
 		interrupts = <113 IRQ_TYPE_EDGE_FALLING>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&light_int_default>;
+		pinctrl-names = "default";
 	};
 
 	imu@68 {
@@ -163,18 +172,11 @@
 		compatible = "qcom,smb1360";
 		reg = <0x14>;
 
-		interrupt-parent = <&msmgpio>;
+		interrupt-parent = <&tlmm>;
 		interrupts = <62 IRQ_TYPE_LEVEL_LOW>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&smb_int_default>;
-
-		/*
-		 * Some properties are battery-specific. Battery detection
-		 * happens in the bootloader, so it will fill those appropriately
-		 * and set status = "okay".
-		 */
-		status = "disabled";
+		pinctrl-names = "default";
 
 		qcom,rsense-10mohm;
 
@@ -202,6 +204,13 @@
 		qcom,fg-reset-at-pon;
 		qcom,fg-reset-threshold-mv = <50>;
 
+		/*
+		 * Some properties are battery-specific. Battery detection
+		 * happens in the bootloader, so it will fill those appropriately
+		 * and set status = "okay".
+		 */
+		status = "disabled";
+
 		usb_otg_vbus: usb-otg-vbus {
 			regulator-max-microamp = <1500000>;
 		};
@@ -215,16 +224,19 @@
 		compatible = "atmel,maxtouch";
 		reg = <0x4a>;
 
-		interrupt-parent = <&msmgpio>;
+		interrupt-parent = <&tlmm>;
 		interrupts = <13 IRQ_TYPE_LEVEL_LOW>;
 
-		reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 12 GPIO_ACTIVE_LOW>;
 
 		vdda-supply = <&pm8916_l6>;
 		vdd-supply = <&reg_ts_vdd>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&ts_int_reset_default>;
+		pinctrl-names = "default";
+
+		/* Keys listed from right to left */
+		linux,keycodes = <KEY_APPSELECT KEY_HOMEPAGE KEY_BACK>;
 	};
 };
 
@@ -233,9 +245,9 @@
 };
 
 &dsi0 {
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&mdss_default>;
 	pinctrl-1 = <&mdss_sleep>;
+	pinctrl-names = "default", "sleep";
 	status = "okay";
 
 	panel@0 {
@@ -244,7 +256,7 @@
 
 		backlight = <&backlight>;
 		power-supply = <&pm8916_l17>;
-		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 25 GPIO_ACTIVE_LOW>;
 
 		port {
 			panel_in: endpoint {
@@ -269,8 +281,8 @@
 };
 
 &pm8916_pwm {
-	pinctrl-names = "default";
 	pinctrl-0 = <&pwm_out>;
+	pinctrl-names = "default";
 	status = "okay";
 };
 
@@ -283,27 +295,20 @@
 	status = "okay";
 };
 
-&pronto {
-	status = "okay";
-	iris {
-		compatible = "qcom,wcn3620";
-	};
-};
-
 &sdhc_1 {
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
 	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
+	pinctrl-names = "default", "sleep";
 
 	status = "okay";
 };
 
 &sdhc_2 {
-	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
+	pinctrl-names = "default", "sleep";
 
-	cd-gpios = <&msmgpio 38 GPIO_ACTIVE_LOW>;
+	cd-gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
 
 	status = "okay";
 };
@@ -316,6 +321,14 @@
 
 &usb_hs_phy {
 	extcon = <&charger>;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -419,11 +432,10 @@
 	};
 };
 
-&msmgpio {
+&tlmm {
 	button_backlight_default: button-backlight-default-state {
 		pins = "gpio17";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -431,7 +443,6 @@
 	camera_front_flash_default: camera-front-flash-default-state {
 		pins = "gpio8", "gpio49";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -439,7 +450,6 @@
 	gpio_hall_sensor_default: gpio-hall-sensor-default-state {
 		pins = "gpio20";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -447,7 +457,6 @@
 	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-up;
 	};
@@ -455,7 +464,6 @@
 	lcd_bl_en_default: lcd-bl-en-default-state {
 		pins = "gpio98";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -463,7 +471,6 @@
 	light_int_default: light-int-default-state {
 		pins = "gpio113";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -471,7 +478,6 @@
 	mag_reset_default: mag-reset-default-state {
 		pins = "gpio68";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -479,7 +485,6 @@
 	mdss_default: mdss-default-state {
 		pins = "gpio25";
 		function = "gpio";
-
 		drive-strength = <8>;
 		bias-disable;
 	};
@@ -487,7 +492,6 @@
 	mdss_sleep: mdss-sleep-state {
 		pins = "gpio25";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-down;
 	};
@@ -495,7 +499,6 @@
 	smb_int_default: smb-int-default-state {
 		pins = "gpio62";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-pull-up;
 	};
@@ -503,7 +506,6 @@
 	ts_int_reset_default: ts-int-reset-default-state {
 		pins = "gpio12", "gpio13";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -511,7 +513,6 @@
 	ts_vdd_default: ts-vdd-default-state {
 		pins = "gpio78";
 		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
@@ -519,7 +520,6 @@
 	usb_id_default: usb-id-default-state {
 		pins = "gpio110";
 		function = "gpio";
-
 		drive-strength = <8>;
 		bias-pull-up;
 	};
@@ -527,18 +527,17 @@
 	usb_id_switch_default: usb-id-switch-default-state {
 		pins = "gpio121";
 		function = "gpio";
-
 		drive-strength = <2>;
 		output-high;
 	};
 };
 
 &pm8916_mpps {
-	pwm_out: mpp4 {
+	pwm_out: mpp4-state {
 		pins = "mpp4";
 		function = "digital";
-		output-low;
 		power-source = <PM8916_MPP_VPH>;
+		output-low;
 		qcom,dtest = <1>;
 	};
 };

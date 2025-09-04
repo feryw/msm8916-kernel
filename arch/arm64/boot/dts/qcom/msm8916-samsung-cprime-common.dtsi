@@ -23,8 +23,8 @@
 		reg = <0x14>;
 		interrupt-parent = <&msmgpio>;
 		interrupts = <12 IRQ_TYPE_EDGE_FALLING>;
-		pinctrl-names = "default";
 		pinctrl-0 = <&muic_int_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -55,9 +55,9 @@
 };
 
 &st_accel {
-	status = "okay";
 	compatible = "st,lis2hh12";
 	mount-matrix = "1",  "0", "0",
 		       "0", "-1", "0",
 		       "0",  "0", "1";
+	status = "okay";
 };

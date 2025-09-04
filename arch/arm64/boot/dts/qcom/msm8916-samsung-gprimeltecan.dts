@@ -43,8 +43,8 @@
 
 		clocks = <&rpmcc RPM_SMD_BB_CLK2_PIN>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&nfc_default>, <&nfc_clk_req>;
+		pinctrl-names = "default";
 	};
 };
 

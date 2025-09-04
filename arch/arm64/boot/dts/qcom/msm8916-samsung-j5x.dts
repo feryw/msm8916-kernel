@@ -32,18 +32,18 @@
 };
 
 &reg_vdd_lcd_1p8 {
-	status = "okay";
 	gpio = <&msmgpio 69 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 };
 
 &reg_vdd_lcd_3p0 {
-	status = "okay";
 	gpio = <&msmgpio 115 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 };
 
 &reg_vdd_tsp_a {
-	status = "okay";
 	gpio = <&msmgpio 108 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 };
 
 &accel_int_default {

@@ -38,8 +38,8 @@
 		vdd-supply = <&reg_vdd_tsp_a>;
 		vddio-supply = <&pm8916_l6>;
 
-		pinctrl-names = "default";
 		pinctrl-0 = <&tsp_int_default>;
+		pinctrl-names = "default";
 	};
 };
 

@@ -49,14 +49,14 @@
 };
 
 &reg_vdd_lcd_3p0 {
-	status = "okay";
 	vin-supply = <&pm8916_l17>;
 	gpio = <&msmgpio 102 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 };
 
 &reg_vdd_tsp_a {
-	status = "okay";
 	gpio = <&msmgpio 16 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 };
 
 &lcd_3p0_ldo_en_default {

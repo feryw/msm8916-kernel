@@ -85,7 +85,7 @@
 		pinctrl-0 = <&usb_id_default>;
 	};
 
-	bat: battery {
+	battery: battery {
 		compatible = "simple-battery";
 		voltage-min-design-microvolt = <3400000>;
 		voltage-max-design-microvolt = <4350000>;
@@ -236,7 +236,7 @@
 		pinctrl-0 = <&light_int_default>;
 
 		vdd-supply = <&pm8916_l17>;
-		vddio-supply = <&pm8916_l6>;
+		vio-supply = <&pm8916_l6>;
 	};
 
 	gyroscope@68 {
@@ -277,12 +277,13 @@
 
 		rmi4-f01@1 {
 			reg = <0x1>;
-			syna,nosleep-mode = <1>; // Allow sleeping
+			syna,nosleep-mode = <1>; /* Allow sleeping */
 		};
 
 		rmi4-f12@12 {
 			reg = <0x12>;
-			syna,sensor-type = <1>; // Touchscreen
+			syna,sensor-type = <1>; /* Touchscreen */
+			syna,no-pressure;
 		};
 	};
 };
@@ -328,7 +329,7 @@
 &pm8916_bms {
 	status = "okay";
 
-	monitored-battery = <&bat>;
+	monitored-battery = <&battery>;
 	power-supplies = <&pm8916_charger>;
 };
 
@@ -338,7 +339,7 @@
 	qcom,vdd-safe = <4300000>;
 	qcom,ibat-safe = <900000>;
 
-	monitored-battery = <&bat>;
+	monitored-battery = <&battery>;
 };
 
 &pm8916_pwm {
@@ -353,10 +354,6 @@
 };
 
 &pm8916_vib {
-	status = "okay";
-};
-
-&pronto {
 	status = "okay";
 };
 
@@ -400,6 +397,14 @@
 	qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
 	qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
 	qcom,hphl-jack-type-normally-open;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -506,7 +511,7 @@
 };
 
 &msmgpio {
-	accel_int_default: accel-int-default {
+	accel_int_default: accel-int-default-state {
 		pins = "gpio116";
 		function = "gpio";
 
@@ -514,7 +519,7 @@
 		bias-disable;
 	};
 
-	camera_flash_default: camera-flash-default {
+	camera_flash_default: camera-flash-default-state {
 		pins = "gpio31", "gpio32";
 		function = "gpio";
 
@@ -522,7 +527,7 @@
 		bias-disable;
 	};
 
-	ctp_pwr_en_default: ctp-pwr-en-default {
+	ctp_pwr_en_default: ctp-pwr-en-default-state {
 		pins = "gpio17";
 		function = "gpio";
 
@@ -530,7 +535,7 @@
 		bias-disable;
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107";
 		function = "gpio";
 
@@ -538,7 +543,7 @@
 		bias-pull-up;
 	};
 
-	gyro_int_default: gyro-int-default {
+	gyro_int_default: gyro-int-default-state {
 		pins = "gpio22", "gpio23";
 		function = "gpio";
 
@@ -546,7 +551,7 @@
 		bias-disable;
 	};
 
-	light_int_default: light-int-default {
+	light_int_default: light-int-default-state {
 		pins = "gpio115";
 		function = "gpio";
 
@@ -554,7 +559,7 @@
 		bias-disable;
 	};
 
-	magn_int_default: magn-int-default {
+	magn_int_default: magn-int-default-state {
 		pins = "gpio113";
 		function = "gpio";
 
@@ -562,24 +567,23 @@
 		bias-disable;
 	};
 
-	mdss {
-		mdss_default: mdss-default {
-			pins = "gpio25";
-			function = "gpio";
+	mdss_default: mdss-default-state {
+		pins = "gpio25";
+		function = "gpio";
 
-			drive-strength = <8>;
-			bias-disable;
-		};
-		mdss_sleep: mdss-sleep {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-pull-down;
-		};
+		drive-strength = <8>;
+		bias-disable;
 	};
 
-	tp_int_default: tp-int-default {
+	mdss_sleep: mdss-sleep-state {
+		pins = "gpio25";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	tp_int_default: tp-int-default-state {
 		pins = "gpio13";
 		function = "gpio";
 
@@ -587,7 +591,7 @@
 		bias-disable;
 	};
 
-	usb_id_default: usb-id-default {
+	usb_id_default: usb-id-default-state {
 		pins = "gpio37";
 		function = "gpio";
 
@@ -597,12 +601,11 @@
 };
 
 &pm8916_mpps {
-	pwm_out: mpp4 {
+	pwm_out: mpp4-state {
 		pins = "mpp4";
 		function = "digital";
-
+		power-source = <PM8916_MPP_VPH>;
 		output-low;
 		qcom,dtest = <1>;
-		power-source = <PM8916_MPP_VPH>;
 	};
 };

@@ -147,13 +147,6 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&smb_int_default>;
 
-		/*
-		 * Some properties are battery-specific. Battery detection
-		 * happens in the bootloader, so it will fill those appropriately
-		 * and set status = "okay".
-		 */
-		status = "disabled";
-
 		qcom,rsense-10mohm;
 
 		qcom,float-voltage-mv = <4400>;
@@ -179,6 +172,13 @@
 		qcom,shdn-after-pwroff;
 		qcom,fg-reset-at-pon;
 		qcom,fg-reset-threshold-mv = <200>;
+
+		/*
+		 * Some properties are battery-specific. Battery detection
+		 * happens in the bootloader, so it will fill those appropriately
+		 * and set status = "okay".
+		 */
+		status = "disabled";
 
 		usb_otg_vbus: usb-otg-vbus {
 			regulator-max-microamp = <1500000>;
@@ -261,10 +261,6 @@
 	status = "okay";
 };
 
-&pronto {
-	status = "okay";
-};
-
 &sdhc_1 {
 	status = "okay";
 
@@ -317,6 +313,14 @@
 	qcom,mbhc-vthreshold-low = <75 100 120 180 500>;
 	qcom,mbhc-vthreshold-high = <75 100 120 180 500>;
 	qcom,hphl-jack-type-normally-open;
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3620";
 };
 
 &smd_rpm_regulators {
@@ -423,7 +427,7 @@
 };
 
 &msmgpio {
-	button_backlight_default: button-backlight-default {
+	button_backlight_default: button-backlight-default-state {
 		pins = "gpio17";
 		function = "gpio";
 
@@ -431,7 +435,7 @@
 		bias-disable;
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio-keys-default-state {
 		pins = "gpio107";
 		function = "gpio";
 
@@ -439,7 +443,7 @@
 		bias-pull-up;
 	};
 
-	mag_reset_default: mag-reset-default {
+	mag_reset_default: mag-reset-default-state {
 		pins = "gpio111";
 		function = "gpio";
 
@@ -447,24 +451,23 @@
 		bias-disable;
 	};
 
-	mdss {
-		mdss_active: mdss-active {
-			pins = "gpio25";
-			function = "gpio";
+	mdss_active: mdss-active-state {
+		pins = "gpio25";
+		function = "gpio";
 
-			drive-strength = <8>;
-			bias-disable;
-		};
-		mdss_suspend: mdss-suspend {
-			pins = "gpio25";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-pull-down;
-		};
+		drive-strength = <8>;
+		bias-disable;
 	};
 
-	smb_int_default: smb_int_default {
+	mdss_suspend: mdss-suspend-state {
+		pins = "gpio25";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	smb_int_default: smb-int-default-state {
 		pins = "gpio62";
 		function = "gpio";
 
@@ -472,7 +475,7 @@
 		bias-pull-up;
 	};
 
-	spk_ext_pa_default: spk-ext-pa-default {
+	spk_ext_pa_default: spk-ext-pa-default-state {
 		pins = "gpio114";
 		function = "gpio";
 
@@ -480,7 +483,7 @@
 		bias-disable;
 	};
 
-	ts_int_reset_default: ts-int-reset-default {
+	ts_int_reset_default: ts-int-reset-default-state {
 		pins = "gpio12", "gpio13";
 		function = "gpio";
 
@@ -488,7 +491,7 @@
 		bias-disable;
 	};
 
-	ts_vcca_default: ts-vcca-default {
+	ts_vcca_default: ts-vcca-default-state {
 		pins = "gpio78";
 		function = "gpio";
 
@@ -496,7 +499,7 @@
 		bias-disable;
 	};
 
-	usb_id_default: usb-id-default {
+	usb_id_default: usb-id-default-state {
 		pins = "gpio110";
 		function = "gpio";
 
@@ -504,7 +507,7 @@
 		bias-pull-up;
 	};
 
-	usb_id_switch_default: usb_id_switch_default {
+	usb_id_switch_default: usb-id-switch-default-state {
 		function = "gpio";
 		pins = "gpio121";
 
@@ -514,12 +517,11 @@
 };
 
 &pm8916_mpps {
-	pwm_out: mpp4 {
+	pwm_out: mpp4-state {
 		pins = "mpp4";
 		function = "digital";
-
+		power-source = <PM8916_MPP_VPH>;
 		output-low;
 		qcom,dtest = <1>;
-		power-source = <PM8916_MPP_VPH>;
 	};
 };
