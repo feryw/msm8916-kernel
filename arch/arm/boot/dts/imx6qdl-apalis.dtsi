@@ -41,7 +41,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_keys>;
 
-		wakeup {
+		key-wakeup {
 			debounce-interval = <10>;
 			gpios = <&gpio1 4 GPIO_ACTIVE_LOW>;
 			label = "Wake-Up";
@@ -99,11 +99,6 @@
 				remote-endpoint = <&lvds0_out>;
 			};
 		};
-	};
-
-	poweroff {
-		compatible = "regulator-poweroff";
-		cpu-supply = <&vgen2_reg>;
 	};
 
 	reg_module_3v3: regulator-module-3v3 {
@@ -223,6 +218,10 @@
 	pinctrl-0 = <&pinctrl_flexcan2_default>;
 	pinctrl-1 = <&pinctrl_flexcan2_sleep>;
 	status = "disabled";
+};
+
+&clks {
+	fsl,pmic-stby-poweroff;
 };
 
 /* Apalis SPI1 */
@@ -512,6 +511,7 @@
 
 	pmic: pmic@8 {
 		compatible = "fsl,pfuze100";
+		fsl,pmic-stby-poweroff;
 		reg = <0x08>;
 
 		regulators {
@@ -824,7 +824,6 @@
 };
 
 &usbotg {
-	disable-over-current;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
 	status = "disabled";
