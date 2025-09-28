@@ -45,14 +45,14 @@
 		 */
 		led_r: led-r {
 			color = <LED_COLOR_ID_RED>;
-			linux,default-trigger = "heartbeat";
-			default-state = "off";
+			linux,default-trigger = "default-on";
+			default-state = "on";
 			function = LED_FUNCTION_POWER;
 		};
 
 		led_g: led-g {
 			color = <LED_COLOR_ID_GREEN>;
-			linux,default-trigger = "phy0link";
+			linux,default-trigger = "phy0rx";
 			default-state = "off";
 			function = LED_FUNCTION_WAN;
 		};
