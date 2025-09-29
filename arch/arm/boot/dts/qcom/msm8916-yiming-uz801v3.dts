@@ -34,23 +34,54 @@
 	pins = "gpio6", "gpio7", "gpio8";
 };
 
-&memshare {
-	/delete-property/ qcom,legacy-client;
+&memshare_gps {
+    status = "disabled";
 };
 
+&gps_mem {
+    status = "disabled";
+};
 
-/delete-node/ &memshare_gps;
-/delete-node/ &gps_mem;
-/delete-node/ &mdss;
-/delete-node/ &gpu;
-/delete-node/ &gpu_iommu;
-/delete-node/ &sound;
-/delete-node/ &lpass;
-/delete-node/ &lpass_codec;
-/delete-node/ &wcnss_bt;
-/delete-node/ &pm8916_codec;
-/delete-node/ &venus;
-/delete-node/ &venus_mem;
-/delete-node/ &camss;
-/delete-node/ &{/thermal-zones/gpu-thermal};
-/delete-node/ &{/thermal-zones/camera-thermal};
+&mdss {
+    status = "disabled";
+};
+
+&gpu {
+    status = "disabled";
+};
+
+&gpu_iommu {
+    status = "disabled";
+};
+
+&sound {
+    status = "disabled";
+};
+
+&lpass {
+    status = "disabled";
+};
+
+&lpass_codec {
+    status = "disabled";
+};
+
+&wcnss_bt {
+    status = "disabled";
+};
+
+&pm8916_codec {
+    status = "disabled";
+};
+
+&venus {
+    status = "disabled";
+};
+
+&venus_mem {
+    status = "disabled";
+};
+
+&camss {
+    status = "disabled";
+};
