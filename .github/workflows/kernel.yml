@@ -168,7 +168,6 @@ jobs:
           echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
           apt-get update
-          apt-get install -y apt-utils
           apt-get install -y initramfs-tools
           dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
           EOF
