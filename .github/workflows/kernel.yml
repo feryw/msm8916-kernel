@@ -35,7 +35,9 @@ jobs:
           TAG="${{ inputs.commit }}"
           VERSION="${TAG#v}"
           VER="${VERSION%-*}"
+          VER_MAJ="${VERSION%.*-*}"
           echo "VER=$VER" >> "$GITHUB_OUTPUT"
+          echo "VER_MAJ=$VER_MAJ" >> "$GITHUB_OUTPUT"
 
           sudo dpkg --add-architecture armhf
           sudo apt-get -y update
@@ -86,9 +88,9 @@ jobs:
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ inputs.commit }}
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ inputs.commit }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER }}-
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
       - name: Build kernel
