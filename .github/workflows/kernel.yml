@@ -45,7 +45,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install perl gnupg gcc-10 \
           gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
           libssl-dev:armhf libelf-dev debhelper patchutils lzop liblz4-tool ccache build-essential qemu-user-static
-          curl -sSL https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
+          curl -sSL https://mirror.sg.gs/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
             
