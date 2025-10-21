@@ -117,11 +117,6 @@ jobs:
               DH_COMPAT=13 make ARCH=arm \
               CROSS_COMPILE=arm-linux-gnueabihf- \
               CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-              -j$(nproc) bindeb-pkg && \
-              rm -f ../*${{ steps.stripver.outputs.VER }}* && \
-              DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
-              DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
-              CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
           mkdir -p artifacts
