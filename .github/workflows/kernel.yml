@@ -1,0 +1,236 @@
+name: Release deb packages kernel
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit or tag to build'
+        required: true
+        default: 'v6.17.4-wyref'
+      arch:
+        description: "Target architecture"
+        required: true
+        default: 'armv7'
+        type: choice
+        options:
+          - armv8
+          - armv7
+      gcc:
+        description: "GCC Version"
+        required: true
+        default: 'gcc10'
+        type: choice
+        options:
+          - gcc9
+          - gcc10
+          
+jobs:
+  build:
+    name: Build kernel
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Prepare & Install dependencies
+        id: stripver
+        run: |
+          TAG="${{ inputs.commit }}"
+          VERSION="${TAG#v}"
+          VER="${VERSION%-*}"
+          VER_MAJ="${VERSION%.*-*}"
+          echo "VER=$VER" >> "$GITHUB_OUTPUT"
+          echo "VER_MAJ=$VER_MAJ" >> "$GITHUB_OUTPUT"
+
+          sudo dpkg --add-architecture armhf
+          sudo apt-get -y update
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install perl gnupg gcc-10 \
+            gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+            libssl-dev:armhf libelf-dev debhelper patchutils lzop liblz4-tool ccache build-essential \
+            qemu-user-static libdw-dev
+          curl -sSL https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
+          sudo timedatectl set-timezone Asia/Jakarta
+          sudo hostnamectl set-hostname wyref
+            
+      - name: Checkout HEAD Kernel Source
+        uses: actions/checkout@v4
+
+      # - name: Backup files
+      #   run: |
+      #     mkdir -p "${RUNNER_TEMP}/backup"
+      #     cp arch/arm/configs/uz801v3_defconfig "${RUNNER_TEMP}/backup"
+      #     cp arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts "${RUNNER_TEMP}/backup"
+      #     cp arch/arm/boot/dts/qcom/msm8916-ufi.dtsi "${RUNNER_TEMP}/backup"
+      #     cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
+      #     cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
+    
+      # - name: Check out code at specified commit
+      #   uses: actions/checkout@v4
+      #   with:
+      #     ref: ${{ github.event.inputs.commit }}
+
+      - name: Prepare repository
+        run: git config --global --add safe.directory "$(pwd)"
+        
+      # - name: Restore defconfig & DTS
+      #   run: |       
+      #     cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
+      #     cp $RUNNER_TEMP/backup/*.dts* arch/arm/boot/dts/qcom
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+      #     git switch -C uptohigh
+      #     git status
+      #     git add .
+      #     git status
+      #     if ! git diff --cached --quiet; then
+      #       git commit -m "sync HEAD defconfig & DTS"
+      #     else
+      #       echo "No changes to commit"
+      #    fi
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
+          restore-keys: |
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
+
+      - name: Build kernel
+        run: |
+          export USE_CCACHE=1
+          export CCACHE_DIR=${{ github.workspace }}/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          make LOCALVERSION= mrproper
+          if [ "${{ inputs.arch }}" = "armv8" ]; then
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 80
+            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 90
+            if [ "${{ inputs.gcc }}" = "gcc9" ]; then
+              sudo update-alternatives --set gcc /usr/bin/gcc-9
+            else
+              sudo update-alternatives --set gcc /usr/bin/gcc-10
+            fi  
+            make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
+            make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc) && \
+            make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
+          else
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 80
+            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 90
+            if [ "${{ inputs.gcc }}" = "gcc9" ]; then
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
+            else
+              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
+            fi
+            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+            -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+            -j$(nproc) bindeb-pkg     
+          fi
+          mkdir -p artifacts
+          if ! find .. -maxdepth 1 -name "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec mv {} artifacts/ \; ;then
+            echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
+            exit 1
+          fi
+	  echo "list artifacts contents"
+          ls artifacts
+          
+      - name: Make boot image
+        run: |
+          if [ "${{ inputs.arch }}" = "armv7" ]; then
+            DISTRO_ARCH="armhf"
+            DTB_DIR="usr/lib"
+          else
+            DISTRO_ARCH="arm64"
+            DTB_DIR="usr/lib/linux-image*/qcom"
+          fi
+
+          DOWNLOAD_SERVER="images.linuxcontainers.org"
+          DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
+          DOWNLOAD_DISTRO="debian;bookworm;${DISTRO_ARCH};default"
+
+          DTB_FILE="msm8916-yiming-uz801v3.dtb"
+          RAMDISK_FILE="initrd.img"
+          ROOTFS_DIR="rootfs-$DISTRO_ARCH"
+          PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
+
+          mkdir -p "$ROOTFS_DIR"
+          ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
+          curl -L -o rootfs.tar.xz "$ROOTFS_URL"
+          tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
+          chmod 1777 "$ROOTFS_DIR/tmp"
+          rm rootfs.tar.xz
+
+          cat <<EOF | tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
+          #!/bin/bash
+          set -e
+          export DEBIAN_FRONTEND=noninteractive
+
+          cat <<EOI > /etc/fstab
+          PARTUUID=$PARTUUID / ext4 defaults,noatime,commit=600,errors=remount-ro 0 1
+          tmpfs /tmp tmpfs defaults,nosuid 0 0
+          EOI
+
+          rm /etc/resolv.conf 
+          echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+          apt-get update
+          apt-get install -y initramfs-tools
+          dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
+          EOF
+
+          chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
+	  echo "list artifacts contents"
+          ls artifacts
+          cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
+
+          sudo mount --bind /proc "$ROOTFS_DIR/proc"
+          sudo mount --bind /dev "$ROOTFS_DIR/dev"
+          sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
+          sudo mount --bind /sys "$ROOTFS_DIR/sys"
+          LANG=C LANGUAGE=C LC_ALL=C sudo chroot "$ROOTFS_DIR" /tmp/chroot.sh
+          sudo umount "$ROOTFS_DIR/proc"
+          sudo umount "$ROOTFS_DIR/dev/pts"
+          sudo umount "$ROOTFS_DIR/dev"
+          sudo umount "$ROOTFS_DIR/sys"
+
+          find "$ROOTFS_DIR/boot" 
+          find "$ROOTFS_DIR/$DTB_DIR" | grep uz801v3 
+          KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
+          INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
+          DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
+          cp "$KERNEL_IMG" Image.gz
+          cp "$INITRD_IMG" initrd.img
+          cp "$DTB_PATH" "$DTB_FILE"
+
+          cat Image.gz $DTB_FILE > kernel-dtb
+          mkbootimg \
+          --base 0x80000000 \
+          --kernel_offset 0x00080000 \
+          --ramdisk_offset 0x02000000 \
+          --tags_offset 0x01e00000 \
+          --pagesize 2048 \
+          --second_offset 0x00f00000 \
+          --ramdisk "$RAMDISK_FILE" \
+          --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
+          --kernel kernel-dtb -o boot.img
+          mv boot.img artifacts/boot-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img
+  
+      - name: Generate release tag
+        id: tagver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="feryw/msm8916-kernel"
+          TAG_NAME=$(echo ${{ inputs.commit }}-${{ inputs.gcc }}-${{ inputs.arch }})
+          if gh release view "$TAG_NAME" --repo "$REPO" > /dev/null 2>&1; then
+            gh release delete "$TAG_NAME" --repo "$REPO" --yes || true
+          fi
+          if gh api "repos/$REPO/git/ref/tags/$TAG_NAME" > /dev/null 2>&1; then
+            gh api --method DELETE "repos/$REPO/git/refs/tags/$TAG_NAME" || true
+          fi
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tagver.outputs.TAG_NAME }}
+          files: artifacts/*
