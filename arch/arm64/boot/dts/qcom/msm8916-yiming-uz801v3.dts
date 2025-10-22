@@ -33,3 +33,31 @@
 &gpio_leds_default {
 	pins = "gpio6", "gpio7", "gpio8";
 };
+
+
+&memshare {
+        /delete-property/ qcom,legacy-client;
+};
+
+&cpu_opp_table {
+        /delete-node/ opp-998400000;
+        /delete-node/ opp-1094400000;
+        /delete-node/ opp-1152000000;
+        /delete-node/ opp-1209600000;
+};
+
+/delete-node/ &memshare_gps;
+/delete-node/ &gps_mem;
+/delete-node/ &mdss;
+/delete-node/ &gpu;
+/delete-node/ &gpu_iommu;
+/delete-node/ &sound;
+/delete-node/ &lpass;
+/delete-node/ &lpass_codec;
+/delete-node/ &wcnss_bt;
+/delete-node/ &pm8916_codec;
+/delete-node/ &venus;
+/delete-node/ &venus_mem;
+/delete-node/ &camss;
+/delete-node/ &{/thermal-zones/gpu-thermal};
+/delete-node/ &{/thermal-zones/camera-thermal};
