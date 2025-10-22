@@ -1464,7 +1464,26 @@ static int camss_configure_pd(struct camss *camss)
 		 camss->version == CAMSS_8250)
 		nbr_pm_domains = PM_DOMAIN_GEN2_COUNT;
 
-	for (i = 0; i < nbr_pm_domains; i++) {
+	/*
+	 * If a platform device has just one power domain, then it is attached
+	 * at platform_probe() level, thus there shall be no need and even no
+	 * option to attach it again, this is the case for CAMSS on MSM8916.
+	 */
+	if (camss->genpd_num == 1)
+		return 0;
+
+	camss->genpd = devm_kmalloc_array(dev, camss->genpd_num,
+					  sizeof(*camss->genpd), GFP_KERNEL);
+	if (!camss->genpd)
+		return -ENOMEM;
+
+	camss->genpd_link = devm_kmalloc_array(dev, camss->genpd_num,
+					       sizeof(*camss->genpd_link),
+					       GFP_KERNEL);
+	if (!camss->genpd_link)
+		return -ENOMEM;
+
+	for (i = 0; i < camss->genpd_num; i++) {
 		camss->genpd[i] = dev_pm_domain_attach_by_id(camss->dev, i);
 		if (IS_ERR(camss->genpd[i])) {
 			ret = PTR_ERR(camss->genpd[i]);
@@ -1687,14 +1706,10 @@ void camss_delete(struct camss *camss)
 
 	pm_runtime_disable(camss->dev);
 
-	if (camss->version == CAMSS_8x96 ||
-	    camss->version == CAMSS_660)
-		nbr_pm_domains = PM_DOMAIN_GEN1_COUNT;
-	else if (camss->version == CAMSS_845 ||
-		 camss->version == CAMSS_8250)
-		nbr_pm_domains = PM_DOMAIN_GEN2_COUNT;
+	if (camss->genpd_num == 1)
+		return;
 
-	for (i = 0; i < nbr_pm_domains; i++) {
+	for (i = 0; i < camss->genpd_num; i++) {
 		device_link_del(camss->genpd_link[i]);
 		dev_pm_domain_detach(camss->genpd[i], true);
 	}
