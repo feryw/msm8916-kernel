@@ -53,39 +53,9 @@ jobs:
       - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
 
-      # - name: Backup files
-      #   run: |
-      #     mkdir -p "${RUNNER_TEMP}/backup"
-      #     cp arch/arm/configs/uz801v3_defconfig "${RUNNER_TEMP}/backup"
-      #     cp arch/arm/boot/dts/qcom/msm8916-yiming-uz801v3.dts "${RUNNER_TEMP}/backup"
-      #     cp arch/arm/boot/dts/qcom/msm8916-ufi.dtsi "${RUNNER_TEMP}/backup"
-      #     cp arch/arm/boot/dts/qcom/msm8916.dtsi "${RUNNER_TEMP}/backup"
-      #     cp arch/arm/boot/dts/qcom/pm8916.dtsi "${RUNNER_TEMP}/backup"
-    
-      # - name: Check out code at specified commit
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: ${{ github.event.inputs.commit }}
-
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
         
-      # - name: Restore defconfig & DTS
-      #   run: |       
-      #     cp $RUNNER_TEMP/backup/*_defconfig arch/arm/configs/
-      #     cp $RUNNER_TEMP/backup/*.dts* arch/arm/boot/dts/qcom
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
-      #     git switch -C uptohigh
-      #     git status
-      #     git add .
-      #     git status
-      #     if ! git diff --cached --quiet; then
-      #       git commit -m "sync HEAD defconfig & DTS"
-      #     else
-      #       echo "No changes to commit"
-      #    fi
-
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
@@ -177,7 +147,6 @@ jobs:
           EOF
 
           chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
-	  echo "list artifacts contents"
           ls artifacts
           cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
 
