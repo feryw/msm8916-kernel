@@ -1,3 +1,5 @@
+
+---
 name: Release deb packages kernel
 on:
   repository_dispatch:
@@ -23,7 +25,7 @@ on:
         options:
           - gcc9
           - gcc10
-          
+
 jobs:
   build:
     name: Build kernel
@@ -42,26 +44,33 @@ jobs:
           sudo dpkg --add-architecture armhf
           sudo apt-get -y update
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install apt-utils
-          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install perl gnupg gcc-10 \
-            gcc-arm-linux-gnueabihf gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
-            libssl-dev:armhf libelf-dev debhelper patchutils lzop liblz4-tool ccache build-essential \
-            qemu-user-static libdw-dev
-          curl -sSL https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | tee /tmp/mkbootimg.deb > /dev/null && sudo dpkg -i /tmp/mkbootimg.deb
+          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install \
+            perl gnupg gcc-10 gcc-arm-linux-gnueabihf \
+            gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+            libssl-dev:armhf libelf-dev debhelper patchutils lzop \
+            liblz4-tool ccache build-essential qemu-user-static libdw-dev
+          curl -sSL \
+            https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
+            tee /tmp/mkbootimg.deb > /dev/null && \
+            sudo dpkg -i /tmp/mkbootimg.deb
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
-            
+
       - name: Checkout HEAD Kernel Source
         uses: actions/checkout@v4
 
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
-        
+
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
+          key: >-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{
+            inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{
+            inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
       - name: Build kernel
@@ -71,37 +80,56 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 80
-            sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 90
+            sudo update-alternatives --install \
+              /usr/bin/gcc gcc /usr/bin/gcc-9 80
+            sudo update-alternatives --install \
+              /usr/bin/gcc gcc /usr/bin/gcc-10 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
-              sudo update-alternatives --set gcc /usr/bin/gcc-9
+              sudo update-alternatives --set \
+                gcc /usr/bin/gcc-9
             else
-              sudo update-alternatives --set gcc /usr/bin/gcc-10
-            fi  
+              sudo update-alternatives --set \
+                gcc /usr/bin/gcc-10
+            fi
             make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc) && \
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9 80
-            sudo update-alternatives --install /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10 90
+            sudo update-alternatives --install \
+              /usr/bin/arm-linux-gnueabihf-gcc \
+              arm-linux-gnueabihf-gcc \
+              /usr/bin/arm-linux-gnueabihf-gcc-9 80
+            sudo update-alternatives --install \
+              /usr/bin/arm-linux-gnueabihf-gcc \
+              arm-linux-gnueabihf-gcc \
+              /usr/bin/arm-linux-gnueabihf-gcc-10 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-9
+              sudo update-alternatives --set \
+                arm-linux-gnueabihf-gcc \
+                /usr/bin/arm-linux-gnueabihf-gcc-9
             else
-              sudo update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-10
+              sudo update-alternatives --set \
+              arm-linux-gnueabihf-gcc \
+              /usr/bin/arm-linux-gnueabihf-gcc-10
             fi
-            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- LOCALVERSION= uz801v3_defconfig
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg && rm -f ../*${{ steps.stripver.outputs.VER }}* && \
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf DH_COMPAT=13 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
-            -j$(nproc) bindeb-pkg     
+            make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
+              LOCALVERSION= uz801v3_defconfig
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
+              DH_COMPAT=13 make ARCH=arm \
+              CROSS_COMPILE=arm-linux-gnueabihf- \
+              CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+              -j$(nproc) bindeb-pkg
           fi
           mkdir -p artifacts
-          if ! find .. -maxdepth 1 -name "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec mv {} artifacts/ \; ;then
+          if ! find .. -maxdepth 1 -name \
+            "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec \
+            mv {} artifacts/ \; ;then
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
+          echo "list artifacts contents"
           ls artifacts
-          
+
       - name: Make boot image
         run: |
           if [ "${{ inputs.arch }}" = "armv7" ]; then
@@ -138,7 +166,7 @@ jobs:
           tmpfs /tmp tmpfs defaults,nosuid 0 0
           EOI
 
-          rm /etc/resolv.conf 
+          rm /etc/resolv.conf
           echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
           apt-get update
@@ -147,6 +175,7 @@ jobs:
           EOF
 
           chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
+          echo "list artifacts contents"
           ls artifacts
           cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
 
@@ -160,8 +189,8 @@ jobs:
           sudo umount "$ROOTFS_DIR/dev"
           sudo umount "$ROOTFS_DIR/sys"
 
-          find "$ROOTFS_DIR/boot" 
-          find "$ROOTFS_DIR/$DTB_DIR" | grep uz801v3 
+          find "$ROOTFS_DIR/boot"
+          find "$ROOTFS_DIR/$DTB_DIR" | grep uz801v3
           KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
           DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
@@ -181,7 +210,7 @@ jobs:
           --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
           --kernel kernel-dtb -o boot.img
           mv boot.img artifacts/boot-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img
-  
+
       - name: Generate release tag
         id: tagver
         env:
