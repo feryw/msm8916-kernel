@@ -89,8 +89,7 @@ jobs:
           make
           sudo make install
           mkdir -p ../artifacts/regdb
-          find .
-          cp regulatory.db regulatory.db.p7s ../artifacts/regdb/
+          cp regulatory.db ../artifacts/regdb/
           cd ..
 
       - name: Build kernel
@@ -156,8 +155,6 @@ jobs:
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
-          echo "list artifacts contents"
-          find artifacts
 
       - name: Make boot image
         run: |
@@ -173,7 +170,6 @@ jobs:
           DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
           DOWNLOAD_DISTRO="debian;bookworm;${DISTRO_ARCH};default"
 
-          DTB_FILE="msm8916-yiming-uz801v3.dtb"
           RAMDISK_FILE="initrd.img"
           ROOTFS_DIR="rootfs-$DISTRO_ARCH"
           PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
@@ -203,14 +199,11 @@ jobs:
           apt-get install -y initramfs-tools
           mkdir -p /lib/firmware
           cp /tmp/regdb/regulatory.db /lib/firmware/
-          cp /tmp/regdb/regulatory.db.p7s /lib/firmware/
           chmod 644 /lib/firmware/regulatory.db*
           dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
           EOF
 
           chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
-          echo "list artifacts contents"
-          find artifacts
           cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
           cp -R artifacts/regdb $ROOTFS_DIR/tmp/
 
@@ -224,27 +217,49 @@ jobs:
           sudo umount "$ROOTFS_DIR/dev"
           sudo umount "$ROOTFS_DIR/sys"
 
+          DTB_LIST="
+          msm8916-thwc-uf896.dtb
+          msm8916-thwc-ufi001c.dtb
+          msm8916-yiming-uz801v3.dtb
+          "
+
           find "$ROOTFS_DIR/boot"
           find "$ROOTFS_DIR/$DTB_DIR" | grep uz801v3
           KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
-          DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "*uz801v3.dtb" | head -n1)
           cp "$KERNEL_IMG" Image.gz
           cp "$INITRD_IMG" initrd.img
-          cp "$DTB_PATH" "$DTB_FILE"
+          for DTB_FILE in $DTB_LIST; do
+            DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "$DTB_FILE" | head -n1)
 
-          cat Image.gz $DTB_FILE > kernel-dtb
-          mkbootimg \
-          --base 0x80000000 \
-          --kernel_offset 0x00080000 \
-          --ramdisk_offset 0x02000000 \
-          --tags_offset 0x01e00000 \
-          --pagesize 2048 \
-          --second_offset 0x00f00000 \
-          --ramdisk "$RAMDISK_FILE" \
-          --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
-          --kernel kernel-dtb -o boot.img
-          mv boot.img artifacts/boot-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img
+            if [ -z "$DTB_PATH" ]; then
+              echo "DTB not found: $DTB_FILE" >&2
+              exit 1
+            fi
+
+            echo "Building boot image for $DTB_FILE"
+
+            cp "$DTB_PATH" "$DTB_FILE"
+            cat Image.gz "$DTB_FILE" > kernel-dtb
+
+            mkbootimg \
+            --base 0x80000000 \
+            --kernel_offset 0x00080000 \
+            --ramdisk_offset 0x02000000 \
+            --tags_offset 0x01e00000 \
+            --pagesize 2048 \
+            --second_offset 0x00f00000 \
+            --ramdisk "$RAMDISK_FILE" \
+            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
+            --kernel kernel-dtb \
+            -o "boot-${DTB_FILE%.dtb}.img"
+
+            mv "boot-${DTB_FILE%.dtb}.img" \
+              "artifacts/boot-${DTB_FILE%.dtb}-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img"
+          done
+
+          echo "list artifacts contents"
+          find artifacts
 
       - name: Generate release tag
         id: tagver
@@ -268,4 +283,3 @@ jobs:
           files: |
             artifacts/*
             artifacts/regdb/regulatory.db
-            artifacts/regdb/regulatory.db.p7s
