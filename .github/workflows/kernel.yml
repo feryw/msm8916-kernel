@@ -55,7 +55,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
             perl gnupg gcc-10 gcc-arm-linux-gnueabihf python3-m2crypto \
             gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
-            gcc-12-arm-linux-gnueabihf \
+            gcc-12-arm-linux-gnueabihf wget2 aria2 \
             libssl-dev:armhf libelf-dev debhelper patchutils lzop \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
@@ -145,7 +145,7 @@ jobs:
               sudo update-alternatives --set \
                 arm-linux-gnueabihf-gcc \
                 /usr/bin/arm-linux-gnueabihf-gcc-10
-              wget -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz
+              aria2c -c -x16 -s16 -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz
               tar xJf gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz
             else
               sudo update-alternatives --set \
