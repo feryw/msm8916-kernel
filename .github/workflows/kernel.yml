@@ -19,11 +19,12 @@ on:
       gcc:
         description: "GCC Version"
         required: true
-        default: 'gcc10'
+        default: 'gcc12'
         type: choice
         options:
           - gcc9
           - gcc10
+          - gcc12
       config:
         description: "Kernel Type"
         required: true
@@ -54,6 +55,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
             perl gnupg gcc-10 gcc-arm-linux-gnueabihf python3-m2crypto \
             gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+            gcc-12-arm-linux-gnueabihf \
             libssl-dev:armhf libelf-dev debhelper patchutils lzop \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
@@ -100,15 +102,20 @@ jobs:
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
             sudo update-alternatives --install \
-              /usr/bin/gcc gcc /usr/bin/gcc-9 80
+              /usr/bin/gcc gcc /usr/bin/gcc-9 70
             sudo update-alternatives --install \
-              /usr/bin/gcc gcc /usr/bin/gcc-10 90
+              /usr/bin/gcc gcc /usr/bin/gcc-10 80
+            sudo update-alternatives --install \
+              /usr/bin/gcc gcc /usr/bin/gcc-12 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
               sudo update-alternatives --set \
                 gcc /usr/bin/gcc-9
-            else
+            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
               sudo update-alternatives --set \
                 gcc /usr/bin/gcc-10
+            else
+              sudo update-alternatives --set \
+                gcc /usr/bin/gcc-12
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
               make CC='ccache gcc' LOCALVERSION= zhihe_defconfig
@@ -121,19 +128,27 @@ jobs:
             sudo update-alternatives --install \
               /usr/bin/arm-linux-gnueabihf-gcc \
               arm-linux-gnueabihf-gcc \
-              /usr/bin/arm-linux-gnueabihf-gcc-9 80
+              /usr/bin/arm-linux-gnueabihf-gcc-9 70
             sudo update-alternatives --install \
               /usr/bin/arm-linux-gnueabihf-gcc \
               arm-linux-gnueabihf-gcc \
-              /usr/bin/arm-linux-gnueabihf-gcc-10 90
+              /usr/bin/arm-linux-gnueabihf-gcc-10 80
+            sudo update-alternatives --install \
+              /usr/bin/arm-linux-gnueabihf-gcc \
+              arm-linux-gnueabihf-gcc \
+              /usr/bin/arm-linux-gnueabihf-gcc-12 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
               sudo update-alternatives --set \
                 arm-linux-gnueabihf-gcc \
                 /usr/bin/arm-linux-gnueabihf-gcc-9
+            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
+              sudo update-alternatives --set \
+                arm-linux-gnueabihf-gcc \
+                /usr/bin/arm-linux-gnueabihf-gcc-10
             else
               sudo update-alternatives --set \
-              arm-linux-gnueabihf-gcc \
-              /usr/bin/arm-linux-gnueabihf-gcc-10
+                arm-linux-gnueabihf-gcc \
+                /usr/bin/arm-linux-gnueabihf-gcc-12
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
