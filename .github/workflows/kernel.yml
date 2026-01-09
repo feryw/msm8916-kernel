@@ -53,7 +53,7 @@ jobs:
           sudo apt-get update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
-            perl gnupg gcc-10 python3-m2crypto wget2 aria2 \
+            perl gnupg gcc-10 python3-m2crypto wget2 aria2 libmpc-dev \
             libssl-dev:armhf libelf-dev debhelper patchutils lzop \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
