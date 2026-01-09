@@ -147,7 +147,7 @@ jobs:
                 /usr/bin/arm-linux-gnueabihf-gcc-10
               wget -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz
               tar xJf gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz
-              find . -type d -name "*gcc*"
+              find ../ -name "arm-none-linux-gnueabihf-gcc"
             else
               sudo update-alternatives --set \
                 arm-linux-gnueabihf-gcc \
