@@ -131,7 +131,7 @@ jobs:
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
               DH_COMPAT=13 make ARCH=arm \
               CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
-              CC='ccache ./${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc' LOCALVERSION= \
+              CC="ccache ./${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
           mkdir -p artifacts
