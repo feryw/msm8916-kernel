@@ -19,12 +19,13 @@ on:
       gcc:
         description: "GCC Version"
         required: true
-        default: 'gcc10'
+        default: 'gcc14'
         type: choice
         options:
           - gcc9
           - gcc10
           - gcc12
+          - gcc14
       config:
         description: "Kernel Type"
         required: true
@@ -114,10 +115,14 @@ jobs:
               aria2c -c -x16 -s16 -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
               tar xJf gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
               GCC_ROOT="gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf"
-            else
+            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
               aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
               tar xJf arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
               GCC_ROOT="arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf"
+            else
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf"
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm \
