@@ -121,17 +121,17 @@ jobs:
             find . -name "arm-none-linux-gnueabihf-*"
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm \
-                CROSS_COMPILE=msm8916-kernel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf- \
+                CROSS_COMPILE=./gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf- \
                 LOCALVERSION= zhihe_defconfig
             else
               make ARCH=arm \
-                CROSS_COMPILE=msm8916-kernel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf- \
+                CROSS_COMPILE=./gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf- \
                 LOCALVERSION= zhihe_big_defconfig
             fi
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
               DH_COMPAT=13 make ARCH=arm \
-              CROSS_COMPILE=msm8916-kernel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf- \
-              CC='ccache msm8916-kernel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf-gcc' LOCALVERSION= \
+              CROSS_COMPILE=./gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf- \
+              CC='ccache ./gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf-gcc' LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
           mkdir -p artifacts
