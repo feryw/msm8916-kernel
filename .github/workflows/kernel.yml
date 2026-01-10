@@ -24,6 +24,8 @@ on:
         options:
           - gcc9
           - gcc10
+          - gcc12
+          - gcc14
       config:
         description: "Kernel Type"
         required: true
@@ -99,53 +101,43 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
-            sudo update-alternatives --install \
-              /usr/bin/gcc gcc /usr/bin/gcc-9 80
-            sudo update-alternatives --install \
-              /usr/bin/gcc gcc /usr/bin/gcc-10 90
-            if [ "${{ inputs.gcc }}" = "gcc9" ]; then
-              sudo update-alternatives --set \
-                gcc /usr/bin/gcc-9
+              if [ "${{ inputs.config }}" = "small" ]; then
+              make CC='ccache gcc' LOCALVERSION= zhihe_defconfig
             else
-              sudo update-alternatives --set \
-                gcc /usr/bin/gcc-10
+              make CC='ccache gcc' LOCALVERSION= zhihe_big_defconfig
             fi
-            if [ "${{ inputs.config }}" = "small" ]; then
-              make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
-            else
-              make CC='ccache gcc' LOCALVERSION= uz801v3_big_defconfig
-            fi
-            make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc) && \
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            sudo update-alternatives --install \
-              /usr/bin/arm-linux-gnueabihf-gcc \
-              arm-linux-gnueabihf-gcc \
-              /usr/bin/arm-linux-gnueabihf-gcc-9 80
-            sudo update-alternatives --install \
-              /usr/bin/arm-linux-gnueabihf-gcc \
-              arm-linux-gnueabihf-gcc \
-              /usr/bin/arm-linux-gnueabihf-gcc-10 90
             if [ "${{ inputs.gcc }}" = "gcc9" ]; then
-              sudo update-alternatives --set \
-                arm-linux-gnueabihf-gcc \
-                /usr/bin/arm-linux-gnueabihf-gcc-9
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf"
+            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
+              aria2c -c -x16 -s16 -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf"
+            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf"
             else
-              sudo update-alternatives --set \
-              arm-linux-gnueabihf-gcc \
-              /usr/bin/arm-linux-gnueabihf-gcc-10
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf"
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
-              make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
-                LOCALVERSION= uz801v3_defconfig
+              make ARCH=arm \
+                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                LOCALVERSION= zhihe_defconfig
             else
-              make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
-                LOCALVERSION= uz801v3_big_defconfig
+              make ARCH=arm \
+                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                LOCALVERSION= zhihe_big_defconfig
             fi
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
               DH_COMPAT=13 make ARCH=arm \
-              CROSS_COMPILE=arm-linux-gnueabihf- \
-              CC='ccache arm-linux-gnueabihf-gcc' LOCALVERSION= \
+              CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+              CC="ccache ./${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
           mkdir -p artifacts
@@ -155,7 +147,7 @@ jobs:
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
-
+          
       - name: Make boot image
         run: |
           if [ "${{ inputs.arch }}" = "armv7" ]; then
