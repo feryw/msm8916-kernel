@@ -48,13 +48,12 @@ jobs:
           echo "VER=$VER" >> "$GITHUB_OUTPUT"
           echo "VER_MAJ=$VER_MAJ" >> "$GITHUB_OUTPUT"
 
-          sudo dpkg --add-architecture armhf
           sudo apt-get update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
             perl gnupg gcc-10 gcc-arm-linux-gnueabihf python3-m2crypto \
             gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
-            libssl-dev:armhf libelf-dev debhelper patchutils lzop \
+            libssl-dev libelf-dev debhelper patchutils lzop \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
             https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
@@ -117,17 +116,17 @@ jobs:
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm \
-                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-linux-gnueabihf- \
                 LOCALVERSION= zhihe_defconfig
             else
               make ARCH=arm \
-                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-linux-gnueabihf- \
                 LOCALVERSION= zhihe_big_defconfig
             fi
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
               DH_COMPAT=13 make ARCH=arm \
-              CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
-              CC="ccache ./${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
+              CROSS_COMPILE=./${GCC_ROOT}/bin/arm-linux-gnueabihf- \
+              CC="ccache ./${GCC_ROOT}/bin/arm-linux-gnueabihf-gcc" LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
           mkdir -p artifacts
