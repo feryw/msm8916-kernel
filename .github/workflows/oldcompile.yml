@@ -1,5 +1,5 @@
 ---
-name: Release deb packages kernel
+name: Release deb packages kernel (old toolchain)
 on:
   repository_dispatch:
   workflow_dispatch:
