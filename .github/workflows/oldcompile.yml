@@ -51,8 +51,7 @@ jobs:
           sudo apt-get update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
-            perl gnupg gcc-10 gcc-arm-linux-gnueabihf python3-m2crypto \
-            gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+            perl gnupg python3-m2crypto \
             libssl-dev libelf-dev debhelper patchutils lzop \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
@@ -123,11 +122,11 @@ jobs:
                 CROSS_COMPILE=./${GCC_ROOT}/bin/arm-linux-gnueabihf- \
                 LOCALVERSION= zhihe_big_defconfig
             fi
-            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
-              DH_COMPAT=13 make ARCH=arm \
+            pwd
+            make ARCH=arm \
               CROSS_COMPILE=./${GCC_ROOT}/bin/arm-linux-gnueabihf- \
               CC="ccache ./${GCC_ROOT}/bin/arm-linux-gnueabihf-gcc" LOCALVERSION= \
-              -j$(nproc) bindeb-pkg
+              -j$(nproc)
           fi
           mkdir -p artifacts
           if ! find .. -maxdepth 1 -name \
