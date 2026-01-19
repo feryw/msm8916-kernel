@@ -7,7 +7,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
-        default: 'v6.18.1-wyref'
+        default: 'v6.18.5-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -24,8 +24,11 @@ on:
         options:
           - gcc9
           - gcc10
+          - gcc11
           - gcc12
+          - gcc13
           - gcc14
+          - gcc15
       config:
         description: "Kernel Type"
         required: true
@@ -116,14 +119,26 @@ jobs:
               aria2c -c -x16 -s16 -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
               tar xJf gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
               GCC_ROOT="gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf"
+            elif [ "${{ inputs.gcc }}" = "gcc11" ]; then
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf arm-gnu-toolchain-11.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="arm-gnu-toolchain-11.3.rel1-aarch64-arm-none-linux-gnueabihf"  
             elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
               aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
               tar xJf arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
               GCC_ROOT="arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf"
-            else
-              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+            elif [ "${{ inputs.gcc }}" = "gcc13" ]; then
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf arm-gnu-toolchain-13.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="arm-gnu-toolchain-13.3.rel1-aarch64-arm-none-linux-gnueabihf"
+            elif [ "${{ inputs.gcc }}" = "gcc14" ]; then
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
               tar xJf arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
               GCC_ROOT="arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf"
+            else
+              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/15.2.rel1/binrel/arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              tar xJf arm-gnu-toolchain-15.2.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
+              GCC_ROOT="arm-gnu-toolchain-15.2.rel1-aarch64-arm-none-linux-gnueabihf"
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm \
