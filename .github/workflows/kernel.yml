@@ -7,7 +7,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
-        default: 'v6.18.5-wyref'
+        default: 'v6.18.6-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -57,8 +57,7 @@ jobs:
           sudo apt-get update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
-            perl gnupg gcc-10 gcc-arm-linux-gnueabihf python3-m2crypto \
-            gcc-9-arm-linux-gnueabihf gcc-10-arm-linux-gnueabihf \
+            perl gnupg gcc-10 python3-m2crypto \
             libssl-dev:armhf libelf-dev debhelper patchutils lzop \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
