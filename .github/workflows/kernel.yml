@@ -181,6 +181,7 @@ jobs:
               CC="ccache ${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
+          find ../ -name "*deb"
           mkdir -p artifacts
           if ! find .. -maxdepth 1 -name \
             "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec \
