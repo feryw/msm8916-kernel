@@ -91,7 +91,8 @@ jobs:
           key: arm-gcc-${{ inputs.gcc }}-${{ inputs.arch }}
           restore-keys: |
             arm-gcc-${{ inputs.gcc }}-${{ inputs.arch }}-
-      
+          save-always: true
+          
       - name: Build matching wireless-regdb
         run: |
           git clone https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git
