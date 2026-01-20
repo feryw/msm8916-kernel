@@ -161,6 +161,7 @@ jobs:
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
+          find artifacts
           
       - name: Make boot image
         run: |
