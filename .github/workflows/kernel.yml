@@ -183,12 +183,14 @@ jobs:
           fi
           find ../ -name "*deb"
           mkdir -p artifacts
-          if ! find .. -maxdepth 1 -name \
-            "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec \
-            mv {} artifacts/ \; ;then
+          shopt -s nullglob
+          files=(../linux-*${{ steps.stripver.outputs.VER }}*.deb)
+          if [ ${#files[@]} -eq 0 ]; then
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
+          mv "${files[@]}" artifacts/
+
           find artifacts
           
       - name: Make boot image
