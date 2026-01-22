@@ -52,6 +52,7 @@
 		led_g: led-g {
 			color = <LED_COLOR_ID_GREEN>;
 			default-state = "off";
+			linux,default-trigger = "netdev";
 			function = LED_FUNCTION_WAN;
 
 		};
@@ -59,6 +60,7 @@
 		led_b: led-b {
 			color = <LED_COLOR_ID_BLUE>;
 			default-state = "off";
+			linux,default-trigger = "netdev";
 			function = LED_FUNCTION_WLAN;
 		};
 	};
