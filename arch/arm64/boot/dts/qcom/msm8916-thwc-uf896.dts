@@ -34,6 +34,10 @@
 	pins = "gpio81", "gpio82", "gpio83";
 };
 
+&cpu_opp_table {
+    /delete-node/ opp-998400000;
+};
+
 &memshare {
         /delete-property/ qcom,legacy-client;
 };
