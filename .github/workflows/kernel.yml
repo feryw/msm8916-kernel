@@ -295,7 +295,6 @@ jobs:
             mv "boot-${DTB_FILE%.dtb}.img" \
               "artifacts/boot-${DTB_FILE%.dtb}-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img"
           done
-
           echo "list artifacts contents"
           find artifacts
 
