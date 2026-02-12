@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
 dtb-$(CONFIG_ARCH_QCOM) += \
+	msm8916-thwc-uf896.dtb \
+	msm8916-thwc-ufi001c.dtb \
+	msm8916-yiming-uz801v3.dtb \
 	msm8226-motorola-falcon.dtb \
 	qcom-apq8016-sbc.dtb \
 	qcom-apq8026-asus-sparrow.dtb \
