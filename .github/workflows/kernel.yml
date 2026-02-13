@@ -108,9 +108,9 @@ jobs:
                 gcc /usr/bin/gcc-10
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
-              make CC='ccache gcc' LOCALVERSION= uz801v3_defconfig
+              make CC='ccache gcc' LOCALVERSION= zhihe_defconfig
             else
-              make CC='ccache gcc' LOCALVERSION= uz801v3_big_defconfig
+              make CC='ccache gcc' LOCALVERSION= zhihe_big_defconfig
             fi
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc) && \
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
@@ -134,10 +134,10 @@ jobs:
             fi
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
-                LOCALVERSION= uz801v3_defconfig
+                LOCALVERSION= zhihe_defconfig
             else
               make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- \
-                LOCALVERSION= uz801v3_big_defconfig
+                LOCALVERSION= zhihe_big_defconfig
             fi
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
               DH_COMPAT=13 make ARCH=arm \
