@@ -77,17 +77,17 @@ jobs:
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
-      - name: Build matching wireless-regdb
-        run: |
-          git clone https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git
-          cd wireless-regdb
-          # Optionally checkout a commit matching your kernel
-          git checkout master-2025-10-07
-          make
-          sudo make install
-          mkdir -p ../artifacts/regdb
-          cp regulatory.db ../artifacts/regdb/
-          cd ..
+      # - name: Build matching wireless-regdb
+      #   run: |
+      #     git clone https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git
+      #     cd wireless-regdb
+      #     # Optionally checkout a commit matching your kernel
+      #     git checkout master-2025-10-07
+      #     make
+      #    sudo make install
+      #     mkdir -p ../artifacts/regdb
+      #     cp regulatory.db ../artifacts/regdb/
+      #    cd ..
 
       - name: Build kernel
         run: |
