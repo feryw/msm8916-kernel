@@ -77,17 +77,17 @@ jobs:
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
 
-      - name: Build matching wireless-regdb
-        run: |
-          git clone https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git
-          cd wireless-regdb
-          # Optionally checkout a commit matching your kernel
-          git checkout master-2025-10-07
-          make
-          sudo make install
-          mkdir -p ../artifacts/regdb
-          cp regulatory.db ../artifacts/regdb/
-          cd ..
+      # - name: Build matching wireless-regdb
+      #   run: |
+      #     git clone https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git
+      #     cd wireless-regdb
+      #     # Optionally checkout a commit matching your kernel
+      #     git checkout master-2025-10-07
+      #     make
+      #     sudo make install
+      #     mkdir -p ../artifacts/regdb
+      #     cp regulatory.db ../artifacts/regdb/
+      #     cd ..
 
       - name: Build kernel
         run: |
@@ -195,14 +195,14 @@ jobs:
           apt-get install -y apt-utils
           apt-get install -y initramfs-tools
           mkdir -p /lib/firmware
-          cp /tmp/regdb/regulatory.db /lib/firmware/
-          chmod 644 /lib/firmware/regulatory.db*
+          # cp /tmp/regdb/regulatory.db /lib/firmware/
+          # chmod 644 /lib/firmware/regulatory.db*
           dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
           EOF
 
           chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
           cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
-          cp -R artifacts/regdb $ROOTFS_DIR/tmp/
+          # cp -R artifacts/regdb $ROOTFS_DIR/tmp/
 
           sudo mount --bind /proc "$ROOTFS_DIR/proc"
           sudo mount --bind /dev "$ROOTFS_DIR/dev"
@@ -279,4 +279,4 @@ jobs:
           tag_name: ${{ steps.tagver.outputs.TAG_NAME }}
           files: |
             artifacts/*
-            artifacts/regdb/regulatory.db
+            #artifacts/regdb/regulatory.db
