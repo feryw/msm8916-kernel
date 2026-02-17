@@ -42,6 +42,7 @@
     /delete-node/ opp-733000000;
     /delete-node/ opp-867000000;
     /delete-node/ opp-933000000;
+    /delete-node/ opp-998400000;
 };
 
 &memshare {
