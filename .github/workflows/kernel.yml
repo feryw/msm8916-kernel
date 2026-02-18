@@ -94,6 +94,7 @@ jobs:
           export USE_CCACHE=1
           export CCACHE_DIR=${{ github.workspace }}/.ccache
           export PATH="/usr/lib/ccache:$PATH"
+          git tag -n | grep opp
           make LOCALVERSION= mrproper
           if [ "${{ inputs.arch }}" = "armv8" ]; then
             sudo update-alternatives --install \
