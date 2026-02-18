@@ -39,6 +39,7 @@
     /delete-node/ opp-400000000;
     /delete-node/ opp-467000000;
     /delete-node/ opp-500000000;
+    /delete-node/ opp-533000000;
     /delete-node/ opp-733000000;
     /delete-node/ opp-867000000;
     /delete-node/ opp-933000000;
