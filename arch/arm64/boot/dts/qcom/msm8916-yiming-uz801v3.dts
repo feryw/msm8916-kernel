@@ -37,18 +37,20 @@
 &cpu_opp_table {
     /delete-node/ opp-200000000;
     /delete-node/ opp-400000000;
-    /delete-node/ opp-467000000;
+    /delete-node/ opp-466000000;
+    /delete-node/ opp-491000000;
     /delete-node/ opp-500000000;
-    /delete-node/ opp-517000000;
+    /delete-node/ opp-516000000;
     /delete-node/ opp-525000000;
     /delete-node/ opp-533000000;
-    /delete-node/ opp-558000000;
-    /delete-node/ opp-567000000;
+    /delete-node/ opp-550000000;
+    /delete-node/ opp-566000000;
+    /delete-node/ opp-575000000;
     /delete-node/ opp-600000000;
     /delete-node/ opp-633000000;
-    /delete-node/ opp-667000000;
+    /delete-node/ opp-666000000;
     /delete-node/ opp-733000000;
-    /delete-node/ opp-867000000;
+    /delete-node/ opp-866000000;
     /delete-node/ opp-933000000;
     /delete-node/ opp-998400000;
 };
