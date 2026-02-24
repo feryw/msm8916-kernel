@@ -67,9 +67,11 @@ jobs:
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
-      - name: Checkout HEAD Kernel Source
+      - name: Checkout ${{ inputs.commit }} Kernel Source
         uses: actions/checkout@v4
-
+        with:
+          ref: ${{ inputs.commit }}
+        
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
 
