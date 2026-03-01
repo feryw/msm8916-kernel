@@ -7,7 +7,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
-        default: 'v6.12.73-wyref'
+        default: 'v6.12.74-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -175,7 +175,7 @@ jobs:
 
           mkdir -p "$ROOTFS_DIR"
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
-          curl -L -o rootfs.tar.xz "$ROOTFS_URL"
+          curl --retry 5 --retry-delay 5 -L -o rootfs.tar.xz "$ROOTFS_URL"
           tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
           chmod 1777 "$ROOTFS_DIR/tmp"
           rm rootfs.tar.xz
