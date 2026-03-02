@@ -37,6 +37,7 @@
 &cpu_opp_table {
     /delete-node/ opp-200000000;
     /delete-node/ opp-400000000;
+    /delete-node/ opp-508333333;
     /delete-node/ opp-998400000;
 };
 
