@@ -34,6 +34,7 @@
 	pins = "gpio6", "gpio7", "gpio8";
 };
 
+/*
 &memshare {
         /delete-property/ qcom,legacy-client;
 };
@@ -53,3 +54,4 @@
 /delete-node/ &camss;
 /delete-node/ &{/thermal-zones/gpu-thermal};
 /delete-node/ &{/thermal-zones/camera-thermal};
+*/
