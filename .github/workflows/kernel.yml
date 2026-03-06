@@ -7,7 +7,7 @@ on:
       commit:
         description: 'Commit or tag to build'
         required: true
-        default: 'v6.6.119-wyref'
+        default: 'v6.6.129-wyref'
       arch:
         description: "Target architecture"
         required: true
@@ -19,13 +19,16 @@ on:
       gcc:
         description: "GCC Version"
         required: true
-        default: 'gcc14'
+        default: 'gcc10'
         type: choice
         options:
           - gcc9
           - gcc10
+          - gcc11
           - gcc12
+          - gcc13
           - gcc14
+          - gcc15
       config:
         description: "Kernel Type"
         required: true
@@ -54,9 +57,9 @@ jobs:
           sudo apt-get update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
-            perl gnupg gcc-10 python3-m2crypto wget2 aria2 libmpc-dev \
+            perl gnupg gcc-10 python3-m2crypto gcc-arm-linux-gnueabihf \
             libssl-dev:armhf libelf-dev debhelper patchutils lzop \
-            liblz4-tool ccache build-essential qemu-user-static libdw-dev
+            liblz4-tool ccache build-essential qemu-user-static libdw-dev libmpc-dev
           curl -sSL \
             https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
             tee /tmp/mkbootimg.deb > /dev/null && \
@@ -64,22 +67,30 @@ jobs:
           sudo timedatectl set-timezone Asia/Jakarta
           sudo hostnamectl set-hostname wyref
 
-      - name: Checkout HEAD Kernel Source
+      - name: Checkout ${{ inputs.commit }} Kernel Source
         uses: actions/checkout@v4
-
+        with:
+          ref: ${{ inputs.commit }}
+        
       - name: Prepare repository
         run: git config --global --add safe.directory "$(pwd)"
 
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: >-
-            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{
-            inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
           restore-keys: |
-            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{
-            inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
             ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
+
+      - name: Cache ARM GCC toolchain
+        uses: actions/cache@v4
+        with:
+          path: toolchains
+          key: arm-gcc-${{ inputs.gcc }}-${{ inputs.arch }}
+          restore-keys: |
+            arm-gcc-${{ inputs.gcc }}-${{ inputs.arch }}-
+          save-always: true
 
       - name: Build matching wireless-regdb
         run: |
@@ -107,46 +118,81 @@ jobs:
             fi
             make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
           else
-            if [ "${{ inputs.gcc }}" = "gcc9" ]; then
-              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf.tar.xz
-              tar xJf gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf.tar.xz
-              GCC_ROOT="gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf"
-            elif [ "${{ inputs.gcc }}" = "gcc10" ]; then
-              aria2c -c -x16 -s16 -c https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
-              tar xJf gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf.tar.xz
-              GCC_ROOT="gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf"
-            elif [ "${{ inputs.gcc }}" = "gcc12" ]; then
-              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
-              tar xJf arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
-              GCC_ROOT="arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf"
+            case "${{ inputs.gcc }}" in
+              gcc9)
+                DIR="gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/9.2-2019.12/binrel/${DIR}.tar.xz"
+                ;;
+              gcc10)
+                DIR="gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/${DIR}.tar.xz"
+                ;;
+              gcc11)
+                DIR="arm-gnu-toolchain-11.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/11.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc12)
+                DIR="arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc13)
+                DIR="arm-gnu-toolchain-13.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/13.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc14)
+                DIR="arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc15)
+                DIR="arm-gnu-toolchain-15.2.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/15.2.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              *)
+                echo "Unsupported GCC version: ${{ inputs.gcc }}"
+                exit 1
+                ;;
+            esac
+
+            mkdir -p toolchains
+            if [ ! -d "toolchains/$DIR" ]; then
+              cd toolchains
+              echo "Downloading $DIR"
+              aria2c -c -x16 -s16 "$URL"
+              tar xJf "${DIR}.tar.xz"
+              cd -
             else
-              aria2c -c -x16 -s16 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
-              tar xJf arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf.tar.xz
-              GCC_ROOT="arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf"
+              echo "Using cached $DIR"  
             fi
+            
+            GCC_ROOT="toolchains/${DIR}"
             if [ "${{ inputs.config }}" = "small" ]; then
               make ARCH=arm \
-                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                CROSS_COMPILE=${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
                 LOCALVERSION= zhihe_defconfig
             else
               make ARCH=arm \
-                CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                CROSS_COMPILE=${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
                 LOCALVERSION= zhihe_big_defconfig
             fi
+            
             DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
               DH_COMPAT=13 make ARCH=arm \
-              CROSS_COMPILE=./${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
-              CC="ccache ./${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
+              CROSS_COMPILE=${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+              CC="ccache ${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
               -j$(nproc) bindeb-pkg
           fi
+          find ../ -name "*deb"
           mkdir -p artifacts
-          if ! find .. -maxdepth 1 -name \
-            "linux-*${{ steps.stripver.outputs.VER }}*.deb" -exec \
-            mv {} artifacts/ \; ;then
+          shopt -s nullglob
+          files=(../linux-*${{ steps.stripver.outputs.VER }}*.deb)
+          if [ ${#files[@]} -eq 0 ]; then
             echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
             exit 1
           fi
+          mv "${files[@]}" artifacts/
 
+          find artifacts
+          
       - name: Make boot image
         run: |
           if [ "${{ inputs.arch }}" = "armv7" ]; then
@@ -167,7 +213,7 @@ jobs:
 
           mkdir -p "$ROOTFS_DIR"
           ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
-          curl -L -o rootfs.tar.xz "$ROOTFS_URL"
+          curl --retry 5 --retry-delay 3 -L -o rootfs.tar.xz "$ROOTFS_URL"
           tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
           chmod 1777 "$ROOTFS_DIR/tmp"
           rm rootfs.tar.xz
@@ -215,7 +261,7 @@ jobs:
           "
 
           find "$ROOTFS_DIR/boot"
-          find "$ROOTFS_DIR/$DTB_DIR" | grep msm8916
+          find "$ROOTFS_DIR/$DTB_DIR" | grep uz801v3
           KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
           INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
           cp "$KERNEL_IMG" Image.gz
