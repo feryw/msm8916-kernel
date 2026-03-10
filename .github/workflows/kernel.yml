@@ -58,7 +58,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
             perl gnupg gcc-10 python3-m2crypto gcc-arm-linux-gnueabihf \
-            libssl-dev:armhf libelf-dev debhelper patchutils lzop \
+            libssl-dev:armhf libelf-dev debhelper patchutils lzop libmpc-dev \
             liblz4-tool ccache build-essential qemu-user-static libdw-dev
           curl -sSL \
             https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
