@@ -24,6 +24,9 @@ properties:
               - realtek,rtd1619-mali
               - renesas,r9a07g044-mali
               - renesas,r9a07g054-mali
+              - renesas,r9a09g047-mali
+              - renesas,r9a09g056-mali
+              - renesas,r9a09g057-mali
               - rockchip,px30-mali
               - rockchip,rk3568-mali
           - const: arm,mali-bifrost # Mali Bifrost GPU model/revision is fully discoverable
@@ -141,6 +144,9 @@ allOf:
             enum:
               - renesas,r9a07g044-mali
               - renesas,r9a07g054-mali
+              - renesas,r9a09g047-mali
+              - renesas,r9a09g056-mali
+              - renesas,r9a09g057-mali
     then:
       properties:
         interrupts:
