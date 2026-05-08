@@ -1,0 +1,2 @@
+// SPDX-License-Identifier: GPL-2.0-only
+#include "arm64/qcom/msm8916-yiming-uz801v3.dts"
