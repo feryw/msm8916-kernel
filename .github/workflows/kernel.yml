@@ -1,0 +1,322 @@
+---
+name: Release deb packages kernel
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit or tag to build'
+        required: true
+        default: 'v7.0.1-wyref'
+      arch:
+        description: "Target architecture"
+        required: true
+        default: 'armv7'
+        type: choice
+        options:
+          - armv8
+          - armv7
+      gcc:
+        description: "GCC Version"
+        required: true
+        default: 'gcc10'
+        type: choice
+        options:
+          - gcc9
+          - gcc10
+          - gcc11
+          - gcc12
+          - gcc13
+          - gcc14
+          - gcc15
+      config:
+        description: "Kernel Type"
+        required: true
+        default: 'small'
+        type: choice
+        options:
+          - small
+          - big
+
+jobs:
+  build:
+    name: Build kernel
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Prepare & Install dependencies
+        id: stripver
+        run: |
+          TAG="${{ inputs.commit }}"
+          VERSION="${TAG#v}"
+          VER="${VERSION%-*}"
+          VER_MAJ="${VERSION%.*-*}"
+          echo "VER=$VER" >> "$GITHUB_OUTPUT"
+          echo "VER_MAJ=$VER_MAJ" >> "$GITHUB_OUTPUT"
+
+          sudo dpkg --add-architecture armhf
+          sudo apt-get update
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y apt-utils
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+            perl gnupg gcc-10 python3-m2crypto gcc-arm-linux-gnueabihf \
+            libssl-dev:armhf libelf-dev debhelper patchutils lzop libmpc-dev \
+            liblz4-tool ccache build-essential qemu-user-static libdw-dev
+          curl -sSL \
+            https://kartolo.sby.datautama.net.id/ubuntu/pool/universe/a/android-platform-tools/mkbootimg_34.0.5-12_all.deb | \
+            tee /tmp/mkbootimg.deb > /dev/null && \
+            sudo dpkg -i /tmp/mkbootimg.deb
+          sudo timedatectl set-timezone Asia/Jakarta
+          sudo hostnamectl set-hostname wyref
+
+      - name: Checkout ${{ inputs.commit }} Kernel Source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+        
+      - name: Prepare repository
+        run: git config --global --add safe.directory "$(pwd)"
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}
+          restore-keys: |
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-${{ steps.stripver.outputs.VER_MAJ }}-
+            ${{ runner.os }}-kernel-build-${{ inputs.arch }}-${{ inputs.gcc }}-
+
+      - name: Cache ARM GCC toolchain
+        uses: actions/cache@v4
+        with:
+          path: toolchains
+          key: arm-gcc-${{ inputs.gcc }}-${{ inputs.arch }}
+          restore-keys: |
+            arm-gcc-${{ inputs.gcc }}-${{ inputs.arch }}-
+          save-always: true
+
+      - name: Build matching wireless-regdb
+        run: |
+          git clone https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git
+          cd wireless-regdb
+          # Optionally checkout a commit matching your kernel
+          git checkout master-2026-03-18
+          make
+          sudo make install
+          mkdir -p ../artifacts/regdb
+          cp regulatory.db ../artifacts/regdb/
+          cd ..
+
+      - name: Build kernel
+        run: |
+          export USE_CCACHE=1
+          export CCACHE_DIR=${{ github.workspace }}/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          make LOCALVERSION= mrproper
+          if [ "${{ inputs.arch }}" = "armv8" ]; then
+              if [ "${{ inputs.config }}" = "small" ]; then
+              make CC='ccache gcc' LOCALVERSION= zhihe_defconfig
+            else
+              make CC='ccache gcc' LOCALVERSION= zhihe_big_defconfig
+            fi
+            make CC='ccache gcc' LOCALVERSION= bindeb-pkg -j$(nproc)
+          else
+            case "${{ inputs.gcc }}" in
+              gcc9)
+                DIR="gcc-arm-9.2-2019.12-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/9.2-2019.12/binrel/${DIR}.tar.xz"
+                ;;
+              gcc10)
+                DIR="gcc-arm-10.3-2021.07-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/${DIR}.tar.xz"
+                ;;
+              gcc11)
+                DIR="arm-gnu-toolchain-11.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/11.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc12)
+                DIR="arm-gnu-toolchain-12.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc13)
+                DIR="arm-gnu-toolchain-13.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/13.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc14)
+                DIR="arm-gnu-toolchain-14.3.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.3.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              gcc15)
+                DIR="arm-gnu-toolchain-15.2.rel1-aarch64-arm-none-linux-gnueabihf"
+                URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/15.2.rel1/binrel/${DIR}.tar.xz"
+                ;;
+              *)
+                echo "Unsupported GCC version: ${{ inputs.gcc }}"
+                exit 1
+                ;;
+            esac
+
+            mkdir -p toolchains
+            if [ ! -d "toolchains/$DIR" ]; then
+              cd toolchains
+              echo "Downloading $DIR"
+              aria2c -c -x16 -s16 "$URL"
+              tar xJf "${DIR}.tar.xz"
+              cd -
+            else
+              echo "Using cached $DIR"  
+            fi
+            
+            GCC_ROOT="toolchains/${DIR}"
+            if [ "${{ inputs.config }}" = "small" ]; then
+              make ARCH=arm \
+                CROSS_COMPILE=${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                LOCALVERSION= zhihe_defconfig
+            else
+              make ARCH=arm \
+                CROSS_COMPILE=${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+                LOCALVERSION= zhihe_big_defconfig
+            fi
+            
+            DEB_BUILD_OPTIONS=compress=gzip KBUILD_DEBARCH=armhf \
+              DH_COMPAT=13 make ARCH=arm \
+              CROSS_COMPILE=${GCC_ROOT}/bin/arm-none-linux-gnueabihf- \
+              CC="ccache ${GCC_ROOT}/bin/arm-none-linux-gnueabihf-gcc" LOCALVERSION= \
+              -j$(nproc) bindeb-pkg
+          fi
+          find ../ -name "*deb"
+          mkdir -p artifacts
+          shopt -s nullglob
+          files=(../linux-*${{ steps.stripver.outputs.VER }}*.deb)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No matching .deb files found for version ${{ steps.stripver.outputs.VER }}"
+            exit 1
+          fi
+          mv "${files[@]}" artifacts/
+
+          find artifacts
+          
+      - name: Make boot image
+        run: |
+          if [ "${{ inputs.arch }}" = "armv7" ]; then
+            DISTRO_ARCH="armhf"
+            DTB_DIR="usr/lib"
+          else
+            DISTRO_ARCH="arm64"
+            DTB_DIR="usr/lib/linux-image*/qcom"
+          fi
+
+          DOWNLOAD_SERVER="images.linuxcontainers.org"
+          DOWNLOAD_INDEX_PATH="/meta/1.0/index-system"
+          DOWNLOAD_DISTRO="debian;bookworm;${DISTRO_ARCH};default"
+
+          RAMDISK_FILE="initrd.img"
+          ROOTFS_DIR="rootfs-$DISTRO_ARCH"
+          PARTUUID="a7ab80e8-e9d1-e8cd-f157-93f69b1d141e"
+
+          mkdir -p "$ROOTFS_DIR"
+          ROOTFS_URL="https://$DOWNLOAD_SERVER$(curl -fsSL "https://$DOWNLOAD_SERVER$DOWNLOAD_INDEX_PATH" | grep "$DOWNLOAD_DISTRO" | cut -f6 -d';')rootfs.tar.xz"
+          curl --retry 5 --retry-delay 3 -L -o rootfs.tar.xz "$ROOTFS_URL"
+          tar -xf rootfs.tar.xz -C "$ROOTFS_DIR"
+          chmod 1777 "$ROOTFS_DIR/tmp"
+          rm rootfs.tar.xz
+
+          cat <<EOF | tee "$ROOTFS_DIR/tmp/chroot.sh" > /dev/null
+          #!/bin/bash
+          set -e
+          export DEBIAN_FRONTEND=noninteractive
+
+          cat <<EOI > /etc/fstab
+          PARTUUID=$PARTUUID / ext4 defaults,noatime,commit=600,errors=remount-ro 0 1
+          tmpfs /tmp tmpfs defaults,nosuid 0 0
+          EOI
+
+          rm /etc/resolv.conf
+          echo "nameserver 1.1.1.1" > /etc/resolv.conf
+
+          apt-get update
+          apt-get install -y apt-utils
+          apt-get install -y initramfs-tools
+          mkdir -p /lib/firmware
+          cp /tmp/regdb/regulatory.db /lib/firmware/
+          chmod 644 /lib/firmware/regulatory.db*
+          dpkg -i /tmp/linux-image-*.deb || apt-get install -f -y
+          EOF
+
+          chmod 755 "$ROOTFS_DIR/tmp/chroot.sh"
+          cp artifacts/linux-image-*.deb $ROOTFS_DIR/tmp/
+          cp -R artifacts/regdb $ROOTFS_DIR/tmp/
+
+          sudo mount --bind /proc "$ROOTFS_DIR/proc"
+          sudo mount --bind /dev "$ROOTFS_DIR/dev"
+          sudo mount --bind /dev/pts "$ROOTFS_DIR/dev/pts"
+          sudo mount --bind /sys "$ROOTFS_DIR/sys"
+          LANG=C LANGUAGE=C LC_ALL=C sudo chroot "$ROOTFS_DIR" /tmp/chroot.sh
+          sudo umount "$ROOTFS_DIR/proc"
+          sudo umount "$ROOTFS_DIR/dev/pts"
+          sudo umount "$ROOTFS_DIR/dev"
+          sudo umount "$ROOTFS_DIR/sys"
+
+          DTB_LIST="
+          msm8916-thwc-uf896.dtb
+          msm8916-thwc-ufi001c.dtb
+          msm8916-yiming-uz801v3.dtb
+          "
+
+          find "$ROOTFS_DIR/boot"
+          find "$ROOTFS_DIR/$DTB_DIR" | grep uz801v3
+          KERNEL_IMG=$(find "$ROOTFS_DIR/boot" -name "vmlinuz*" | head -n1)
+          INITRD_IMG=$(find "$ROOTFS_DIR/boot" -name "initrd.img*" | head -n1)
+          cp "$KERNEL_IMG" Image.gz
+          cp "$INITRD_IMG" initrd.img
+          for DTB_FILE in $DTB_LIST; do
+            DTB_PATH=$(find "$ROOTFS_DIR/$DTB_DIR" -name "$DTB_FILE" | head -n1)
+
+            if [ -z "$DTB_PATH" ]; then
+              echo "DTB not found: $DTB_FILE" >&2
+              exit 1
+            fi
+
+            echo "Building boot image for $DTB_FILE"
+
+            cp "$DTB_PATH" "$DTB_FILE"
+            cat Image.gz "$DTB_FILE" > kernel-dtb
+
+            mkbootimg \
+            --base 0x80000000 \
+            --kernel_offset 0x00080000 \
+            --ramdisk_offset 0x02000000 \
+            --tags_offset 0x01e00000 \
+            --pagesize 2048 \
+            --second_offset 0x00f00000 \
+            --ramdisk "$RAMDISK_FILE" \
+            --cmdline "earlycon root=PARTUUID=$PARTUUID console=ttyMSM0,115200" \
+            --kernel kernel-dtb \
+            -o "boot-${DTB_FILE%.dtb}.img"
+
+            mv "boot-${DTB_FILE%.dtb}.img" \
+              "artifacts/boot-${DTB_FILE%.dtb}-${{ inputs.commit }}_${{ inputs.gcc }}_${{ inputs.arch }}.img"
+          done
+
+          echo "list artifacts contents"
+          find artifacts
+
+      - name: Generate release tag
+        id: tagver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="feryw/msm8916-kernel"
+          TAG_NAME=$(echo ${{ inputs.commit }}-${{ inputs.gcc }}-${{ inputs.arch }}_${{ inputs.config }})
+          if gh release view "$TAG_NAME" --repo "$REPO" > /dev/null 2>&1; then
+            gh release delete "$TAG_NAME" --repo "$REPO" --yes || true
+          fi
+          if gh api "repos/$REPO/git/ref/tags/$TAG_NAME" > /dev/null 2>&1; then
+            gh api --method DELETE "repos/$REPO/git/refs/tags/$TAG_NAME" || true
+          fi
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tagver.outputs.TAG_NAME }}
+          files: |
+            artifacts/*
+            artifacts/regdb/regulatory.db
